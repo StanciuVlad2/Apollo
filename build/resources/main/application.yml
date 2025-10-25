@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/restaurant
+    username: restaurant
+    password: restaurant
+    # optional, dar ajută:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none     # schema e creată de Postgres la init, din /docker-entrypoint-initdb.d
+    show-sql: true
+
+  sql:
+    init:
+      mode: never        # evită ca Spring să mai caute/ruleze schema.sql din classpath
+
+# scoate asta dacă nu folosești userul default de la Spring Security
+  security:
+    user:
+      name: admin
+      password: 1234
+  management:
+    health:
+      elasticsearch:
+        enabled: false
+      redis:
+        enabled: false
+      db:
+        enabled: true
+    endpoints:
+      web:
+        exposure:
+          include: health,info
+    endpoint:
+      health:
+        show-details: always
+
+app:
+  token:
+    issuer: "restaurant-app"
+    ttl-minutes: 30
+    rotate-on-login: false
