@@ -5,6 +5,7 @@ import com.restaurant.Apollo.Auth.dto.MeResponse;
 import com.restaurant.Apollo.Auth.service.TokenService;
 import com.restaurant.Apollo.UserManagement.dto.LoginRequest;
 import com.restaurant.Apollo.UserManagement.dto.RegisterRequest;
+import com.restaurant.Apollo.UserManagement.enums.UserRoles;
 import com.restaurant.Apollo.UserManagement.model.User;
 import com.restaurant.Apollo.UserManagement.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -42,7 +43,7 @@ public class AuthController {
         User u = User.builder()
                 .email(email)
                 .password(encoder.encode(req.password()))
-                .roles(Set.of("ROLE_USER"))
+                .roles(Set.of(UserRoles.ROLE_GUEST.toString()))
                 .build();
         users.save(u);
         return ResponseEntity.ok().build();

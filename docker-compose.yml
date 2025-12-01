@@ -11,8 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - type: tmpfs
-        target: /var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U restaurant -d restaurant -h localhost -p 5432 || exit 1"]
