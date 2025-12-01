@@ -23,6 +23,9 @@ public class User {
     @Column(name = "role")
     private Set<String> roles;
 
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

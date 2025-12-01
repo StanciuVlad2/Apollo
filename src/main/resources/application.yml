@@ -8,15 +8,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none     # schema e creată de Postgres la init, din /docker-entrypoint-initdb.d
+      ddl-auto: update     # Hibernate va crea/actualiza automat tabelele
     show-sql: true
-
-  sql:
-    init:
-      mode: never        # evită ca Spring să mai caute/ruleze schema.sql din classpath
-    jpa:
-      hibernate:
-        ddl-auto: none
 
 # scoate asta dacă nu folosești userul default de la Spring Security
   security:
@@ -39,8 +32,29 @@ spring:
       health:
         show-details: always
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: odin.dining@gmail.com
+    password: uvza whcd cayb hmdn
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    test-connection: false
+
 app:
   token:
     issuer: "restaurant-app"
     ttl-minutes: 30
     rotate-on-login: false
+  email:
+    from: odin.dining@gmail.com
+    verification:
+      url: http://localhost:5173/verify-email
