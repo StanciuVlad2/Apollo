@@ -37,3 +37,44 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_authtoken_expires ON auth_tokens(expires_at);
 CREATE INDEX IF NOT EXISTS idx_email_verification_token ON email_verification_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verification_tokens(user_id);
+
+-- RESTAURANT TABLES (mese)
+CREATE TABLE IF NOT EXISTS restaurant_tables (
+    id BIGSERIAL PRIMARY KEY,
+    table_number INTEGER NOT NULL UNIQUE,
+    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    xPosition DOUBLE PRECISION DEFAULT 0,
+    yPosition DOUBLE PRECISION DEFAULT 0,
+    width DOUBLE PRECISION NOT NULL DEFAULT 100,
+    height DOUBLE PRECISION NOT NULL DEFAULT 100,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- RESERVATIONS (rezervări)
+CREATE TABLE IF NOT EXISTS reservations (
+    id BIGSERIAL PRIMARY KEY,
+    table_id BIGINT NOT NULL REFERENCES restaurant_tables(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    customer_name VARCHAR(255) NOT NULL,
+    customer_phone VARCHAR(20) NOT NULL,
+    customer_email VARCHAR(255),
+    party_size INTEGER NOT NULL CHECK (party_size > 0),
+    reservation_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'CONFIRMED',
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT valid_time_range CHECK (end_time > start_time)
+);
+
+-- INDEXURI PENTRU REZERVĂRI
+CREATE INDEX IF NOT EXISTS idx_reservations_table ON reservations(table_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reservation_date);
+CREATE INDEX IF NOT EXISTS idx_reservations_datetime ON reservations(reservation_date, start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
+CREATE INDEX IF NOT EXISTS idx_restaurant_tables_active ON restaurant_tables(is_active);
