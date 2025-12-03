@@ -48,6 +48,7 @@ public class TestUserInitializer implements CommandLineRunner {
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .roles(Set.of(role.toString()))
+                .emailVerified(true)
                 .build();
 
         userRepository.save(user);
