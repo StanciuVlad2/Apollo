@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -26,20 +27,15 @@ public class ReservationController {
     private UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<?> createReservation(
+    public ResponseEntity<ReservationResponse> createReservation(
             @RequestBody CreateReservationRequest request,
             Principal principal) {
-        try {
-            User user = null;
-            if (principal != null) {
-                user = userRepository.findByEmail(principal.getName()).orElse(null);
-            }
-            
-            ReservationResponse response = reservationService.createReservation(request, user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        User user = null;
+        if (principal != null) {
+            user = userRepository.findByEmail(principal.getName()).orElse(null);
         }
+        ReservationResponse response = reservationService.createReservation(request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/availability")
@@ -71,21 +67,15 @@ public class ReservationController {
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelReservation(
+    public ResponseEntity<ReservationResponse> cancelReservation(
             @PathVariable Long id,
             Principal principal) {
         if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Not authenticated");
         }
-        
-        try {
-            User user = userRepository.findByEmail(principal.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            ReservationResponse response = reservationService.cancelReservation(id, user);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        User user = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        ReservationResponse response = reservationService.cancelReservation(id, user);
+        return ResponseEntity.ok(response);
     }
 }

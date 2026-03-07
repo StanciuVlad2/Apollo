@@ -58,3 +58,6 @@ app:
     from: odin.dining@gmail.com
     verification:
       url: http://localhost:5173/verify-email
+  gemini:
+    api-key: ${GEMINI_API_KEY:AIzaSyCPtwlL-5QcDvPwh37foecXlEDCnYz-nj4}
+    model: gemini-2.5-flash

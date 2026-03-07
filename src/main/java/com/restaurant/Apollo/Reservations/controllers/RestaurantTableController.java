@@ -26,12 +26,8 @@ public class RestaurantTableController {
     @PostMapping
     @PreAuthorize("hasRole('ROLE_MANAGER')")
     public ResponseEntity<TableResponse> createTable(@RequestBody CreateTableRequest request) {
-        try {
-            TableResponse response = tableService.createTable(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        TableResponse response = tableService.createTable(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -40,34 +36,21 @@ public class RestaurantTableController {
             @PathVariable Long id,
             @RequestBody UpdateTableRequest request) {
         log.info("Updating table {} with xPosition={}, yPosition={}", id, request.getXPosition(), request.getYPosition());
-        try {
-            TableResponse response = tableService.updateTable(id, request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            log.error("Failed to update table: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        TableResponse response = tableService.updateTable(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_MANAGER')")
     public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
-        try {
-            tableService.deleteTable(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        tableService.deleteTable(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TableResponse> getTable(@PathVariable Long id) {
-        try {
-            TableResponse response = tableService.getTable(id);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        TableResponse response = tableService.getTable(id);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
