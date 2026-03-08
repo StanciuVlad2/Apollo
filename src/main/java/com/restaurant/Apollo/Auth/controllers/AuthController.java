@@ -55,15 +55,19 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Password too short");
         }
         
-        // Create user (not verified yet)
+        // Create user — verified immediately if admin is creating it
         User u = User.builder()
                 .email(email)
                 .password(encoder.encode(req.password()))
                 .roles(Set.of(UserRoles.ROLE_GUEST.toString()))
-                .emailVerified(false)
+                .emailVerified(req.skipEmailVerification())
                 .build();
         users.save(u);
-        
+
+        if (req.skipEmailVerification()) {
+            return ResponseEntity.ok().body("User created successfully.");
+        }
+
         // Generate verification token
         String token = UUID.randomUUID().toString();
         EmailVerificationToken verificationToken = EmailVerificationToken.builder()

@@ -3,6 +3,7 @@ package com.restaurant.Apollo.UserManagement.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity @Table(name = "users")
@@ -25,6 +26,16 @@ public class User {
 
     @Column(nullable = false)
     private boolean emailVerified = false;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 
     @Override
     public boolean equals(Object o) {
