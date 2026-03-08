@@ -77,4 +77,32 @@ CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_id);
 CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reservation_date);
 CREATE INDEX IF NOT EXISTS idx_reservations_datetime ON reservations(reservation_date, start_time, end_time);
 CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
+
+-- ORDERS
+CREATE TABLE IF NOT EXISTS orders (
+    id BIGSERIAL PRIMARY KEY,
+    table_id BIGINT REFERENCES restaurant_tables(id) ON DELETE SET NULL,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT orders_status_check CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELLED'))
+);
+
+-- ORDER ITEMS
+CREATE TABLE IF NOT EXISTS order_items (
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    menu_item_id VARCHAR(255) NOT NULL,
+    menu_item_name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    unit_price DECIMAL(10,2) NOT NULL
+);
+
+-- INDEXURI PENTRU ORDERS
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_table ON orders(table_id);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_restaurant_tables_active ON restaurant_tables(is_active);

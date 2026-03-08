@@ -6,6 +6,11 @@ spring:
     # optional, dar ajută:
     driver-class-name: org.postgresql.Driver
 
+  elasticsearch:
+    uris: http://localhost:9200
+    socket-timeout: 10s
+    connection-timeout: 5s
+
   jpa:
     hibernate:
       ddl-auto: update     # Hibernate va crea/actualiza automat tabelele

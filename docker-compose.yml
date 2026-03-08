@@ -1,6 +1,8 @@
 version: "3.9"
 
 services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: restaurant-postgres
@@ -19,6 +21,47 @@ services:
       timeout: 3s
       retries: 20
 
+  # ── Elasticsearch ─────────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.6
+    container_name: restaurant-elasticsearch
+    environment:
+      - discovery.type=single-node          # fara cluster multi-nod
+      - xpack.security.enabled=false        # dezactivam auth (dev only)
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m     # limite RAM rezonabile
+      - cluster.name=restaurant-cluster
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+
+  # ── Kibana ────────────────────────────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.18.6
+    container_name: restaurant-kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    restart: unless-stopped
+
+  # ── Spring Boot Backend ───────────────────────────────────────────────────
   backend:
     build:
       context: .
@@ -27,13 +70,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_USERNAME: restaurant
       SPRING_DATASOURCE_PASSWORD: restaurant
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ports:
       - "8080:8080"
     restart: unless-stopped
 
 volumes:
   pgdata:
+  esdata:

@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reservations/availability").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reservations").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cocktails/generate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/menu-items", "/api/menu-items/*").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
