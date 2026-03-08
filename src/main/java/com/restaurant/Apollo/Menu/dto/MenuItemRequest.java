@@ -15,6 +15,7 @@ public record MenuItemRequest(
 
         String category,
         Boolean available,
+        String imageUrl,
 
         @Valid List<RecipeIngredientRequest> recipe
 ) {}

@@ -37,6 +37,9 @@ public class MenuItem {
     @Field(type = FieldType.Boolean)
     private Boolean available;
 
+    @Field(type = FieldType.Keyword)
+    private String imageUrl;
+
     @Field(type = FieldType.Nested)
     @Builder.Default
     private List<RecipeIngredient> recipe = new ArrayList<>();

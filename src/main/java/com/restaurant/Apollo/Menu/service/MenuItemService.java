@@ -88,6 +88,13 @@ public class MenuItemService {
         return mapRecipe(item.getRecipe());
     }
 
+    public MenuItemResponse updateImageUrl(String id, String imageUrl) {
+        MenuItem item = menuItemRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Menu item not found: " + id));
+        item.setImageUrl(imageUrl);
+        return toResponse(menuItemRepository.save(item));
+    }
+
     /**
      * Reads a menu item from ES by ID (used internally by the order service).
      */
@@ -114,6 +121,7 @@ public class MenuItemService {
                 .price(request.price())
                 .category(request.category())
                 .available(request.available() != null ? request.available() : true)
+                .imageUrl(request.imageUrl())
                 .recipe(recipe)
                 .build();
     }
@@ -126,6 +134,7 @@ public class MenuItemService {
                 item.getPrice(),
                 item.getCategory(),
                 item.getAvailable(),
+                item.getImageUrl(),
                 mapRecipe(item.getRecipe())
         );
     }

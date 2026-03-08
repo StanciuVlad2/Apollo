@@ -6,12 +6,21 @@ import com.restaurant.Apollo.Menu.dto.RecipeIngredientDto;
 import com.restaurant.Apollo.Menu.service.MenuItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/menu-items")
@@ -19,6 +28,9 @@ import java.util.List;
 public class MenuItemController {
 
     private final MenuItemService menuItemService;
+
+    @Value("${app.upload.dir:uploads/menu-images}")
+    private String uploadDir;
 
     /** Public endpoint – returns all menu items (without recipe details). */
     @GetMapping
@@ -71,5 +83,32 @@ public class MenuItemController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         menuItemService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @PathVariable String id,
+            @RequestParam("file") MultipartFile file) throws IOException {
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Only image files are allowed"));
+        }
+
+        String original = file.getOriginalFilename();
+        String ext = (original != null && original.contains("."))
+                ? original.substring(original.lastIndexOf('.'))
+                : ".jpg";
+        String filename = UUID.randomUUID() + ext;
+
+        Path dir = Paths.get(uploadDir);
+        Files.createDirectories(dir);
+        Files.copy(file.getInputStream(), dir.resolve(filename));
+
+        String imageUrl = "/uploads/menu-images/" + filename;
+        menuItemService.updateImageUrl(id, imageUrl);
+
+        return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
     }
 }

@@ -9,5 +9,6 @@ public record MenuItemResponse(
         Double price,
         String category,
         Boolean available,
+        String imageUrl,
         List<RecipeIngredientDto> recipe
 ) {}
