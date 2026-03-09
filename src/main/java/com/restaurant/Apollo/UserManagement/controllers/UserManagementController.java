@@ -17,7 +17,7 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/admin/users")
-@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN')")
 @RequiredArgsConstructor
 @Validated
 public class UserManagementController {

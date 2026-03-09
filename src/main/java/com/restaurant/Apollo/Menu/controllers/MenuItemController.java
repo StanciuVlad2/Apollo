@@ -61,19 +61,19 @@ public class MenuItemController {
 
     /** Recipe details – MANAGER or CHEF only. */
     @GetMapping("/{id}/recipe")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('CHEF') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER','CHEF','ADMIN')")
     public ResponseEntity<List<RecipeIngredientDto>> getRecipe(@PathVariable String id) {
         return ResponseEntity.ok(menuItemService.getRecipe(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<MenuItemResponse> create(@Valid @RequestBody MenuItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(menuItemService.create(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER','CHEF','ADMIN')")
     public ResponseEntity<MenuItemResponse> update(
             @PathVariable String id,
             @Valid @RequestBody MenuItemRequest request) {
@@ -81,14 +81,14 @@ public class MenuItemController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         menuItemService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER','CHEF','ADMIN')")
     public ResponseEntity<Map<String, String>> uploadImage(
             @PathVariable String id,
             @RequestParam("file") MultipartFile file) throws IOException {

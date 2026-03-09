@@ -15,12 +15,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/stock")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
 public class StockItemController {
 
     private final StockItemService stockItemService;
 
     @GetMapping
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<List<StockItemResponse>> getAll(
             @RequestParam(required = false) String search) {
         if (search != null && !search.isBlank()) {
@@ -30,25 +30,21 @@ public class StockItemController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<StockItemResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(stockItemService.getById(id));
     }
 
     @GetMapping("/low-stock")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<List<StockItemResponse>> getLowStock() {
         return ResponseEntity.ok(stockItemService.getLowStock());
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<StockItemResponse> create(@Valid @RequestBody StockItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(stockItemService.create(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<StockItemResponse> update(
             @PathVariable String id,
             @Valid @RequestBody StockItemRequest request) {
@@ -56,7 +52,6 @@ public class StockItemController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         stockItemService.delete(id);
         return ResponseEntity.noContent().build();

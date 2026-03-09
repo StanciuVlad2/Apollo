@@ -24,14 +24,14 @@ public class RestaurantTableController {
     private RestaurantTableService tableService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<TableResponse> createTable(@RequestBody CreateTableRequest request) {
         TableResponse response = tableService.createTable(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<TableResponse> updateTable(
             @PathVariable Long id,
             @RequestBody UpdateTableRequest request) {
@@ -41,7 +41,7 @@ public class RestaurantTableController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
         tableService.deleteTable(id);
         return ResponseEntity.noContent().build();
@@ -66,7 +66,7 @@ public class RestaurantTableController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('ROLE_MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<List<TableResponse>> getAllTablesIncludingInactive() {
         List<TableResponse> tables = tableService.getAllTables();
         return ResponseEntity.ok(tables);
