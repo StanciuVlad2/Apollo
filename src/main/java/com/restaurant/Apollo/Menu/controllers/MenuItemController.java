@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import net.coobird.thumbnailator.Thumbnails;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -96,15 +98,19 @@ public class MenuItemController {
             return ResponseEntity.badRequest().body(Map.of("error", "Only image files are allowed"));
         }
 
-        String original = file.getOriginalFilename();
-        String ext = (original != null && original.contains("."))
-                ? original.substring(original.lastIndexOf('.'))
-                : ".jpg";
-        String filename = UUID.randomUUID() + ext;
+        // Always save as .jpg after resize
+        String filename = UUID.randomUUID() + ".jpg";
 
         Path dir = Paths.get(uploadDir);
         Files.createDirectories(dir);
-        Files.copy(file.getInputStream(), dir.resolve(filename));
+
+        // Resize to max 1200×800 keeping aspect ratio, output quality 85%
+        Thumbnails.of(file.getInputStream())
+                .size(1200, 800)
+                .keepAspectRatio(true)
+                .outputFormat("jpg")
+                .outputQuality(0.85)
+                .toFile(dir.resolve(filename).toFile());
 
         String imageUrl = "/uploads/menu-images/" + filename;
         menuItemService.updateImageUrl(id, imageUrl);
