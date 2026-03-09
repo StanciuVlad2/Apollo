@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,6 +136,14 @@ public class ReservationService {
 
     public List<ReservationResponse> getUserReservations(Long userId) {
         return reservationRepository.findAllByUserId(userId).stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    public List<ReservationResponse> getActiveReservationsForUser(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        return reservationRepository.findActiveNowForUser(userId, now.toLocalDate(), now.toLocalTime())
+            .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }

@@ -47,7 +47,9 @@ public class ReservationController {
     }
 
     @GetMapping("/my-reservations")
-    public ResponseEntity<?> getMyReservations(Principal principal) {
+    public ResponseEntity<?> getMyReservations(
+            @RequestParam(required = false, defaultValue = "false") boolean active,
+            Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
         }
@@ -55,7 +57,9 @@ public class ReservationController {
         User user = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        List<ReservationResponse> reservations = reservationService.getUserReservations(user.getId());
+        List<ReservationResponse> reservations = active
+            ? reservationService.getActiveReservationsForUser(user.getId())
+            : reservationService.getUserReservations(user.getId());
         return ResponseEntity.ok(reservations);
     }
 

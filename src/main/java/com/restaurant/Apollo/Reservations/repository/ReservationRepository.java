@@ -40,4 +40,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     );
     
     List<Reservation> findAllByUserId(Long userId);
+
+    @Query("SELECT r FROM Reservation r WHERE r.user.id = :userId " +
+           "AND r.reservationDate = :today " +
+           "AND r.startTime <= :now " +
+           "AND r.endTime > :now " +
+           "AND r.status = 'CONFIRMED'")
+    List<Reservation> findActiveNowForUser(
+        @Param("userId") Long userId,
+        @Param("today") LocalDate today,
+        @Param("now") LocalTime now
+    );
 }
