@@ -33,6 +33,12 @@ public class OrderService {
                 .toList();
     }
 
+    public List<OrderResponse> getByUserId(Long userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public List<OrderResponse> getByStatus(String status) {
         OrderStatus orderStatus = parseStatus(status);
         return orderRepository.findByStatus(orderStatus).stream()

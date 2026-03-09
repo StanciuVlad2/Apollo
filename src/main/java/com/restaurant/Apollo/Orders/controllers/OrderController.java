@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -32,6 +33,15 @@ public class OrderController {
             return ResponseEntity.ok(orderService.getByStatus(status));
         }
         return ResponseEntity.ok(orderService.getAll());
+    }
+
+    @GetMapping("/my-orders")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<OrderResponse>> getMyOrders(Principal principal) {
+        Long userId = userRepository.findByEmail(principal.getName())
+                .map(User::getId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        return ResponseEntity.ok(orderService.getByUserId(userId));
     }
 
     @GetMapping("/{id}")
