@@ -3,6 +3,7 @@ package com.restaurant.Apollo.Stock.controllers;
 import com.restaurant.Apollo.Stock.dto.StockItemRequest;
 import com.restaurant.Apollo.Stock.dto.StockItemResponse;
 import com.restaurant.Apollo.Stock.service.StockItemService;
+import com.restaurant.Apollo.UserManagement.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,15 @@ public class StockItemController {
     private final StockItemService stockItemService;
 
     @GetMapping
-    public ResponseEntity<List<StockItemResponse>> getAll(
+    public ResponseEntity<PageResponse<StockItemResponse>> getAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return ResponseEntity.ok(stockItemService.getAllPaged(search, page, size));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<StockItemResponse>> getAllUnpaged(
             @RequestParam(required = false) String search) {
         if (search != null && !search.isBlank()) {
             return ResponseEntity.ok(stockItemService.search(search));

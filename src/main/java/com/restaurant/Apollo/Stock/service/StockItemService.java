@@ -5,7 +5,13 @@ import com.restaurant.Apollo.Stock.dto.StockItemResponse;
 import com.restaurant.Apollo.Stock.model.StockItem;
 import com.restaurant.Apollo.Stock.model.StockType;
 import com.restaurant.Apollo.Stock.repository.StockItemRepository;
+import com.restaurant.Apollo.UserManagement.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,7 +24,23 @@ import java.util.stream.StreamSupport;
 @RequiredArgsConstructor
 public class StockItemService {
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final StockItemRepository stockItemRepository;
+
+    public PageResponse<StockItemResponse> getAllPaged(String search, int page, int size) {
+        int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, safeSize);
+
+        Page<StockItem> result;
+        if (search != null && !search.isBlank()) {
+            result = stockItemRepository.findByNameContainingIgnoreCase(search, pageable);
+        } else {
+            result = stockItemRepository.findAll(pageable);
+        }
+
+        return PageResponse.from(result, this::toResponse);
+    }
 
     public List<StockItemResponse> getAll() {
         return StreamSupport.stream(stockItemRepository.findAll().spliterator(), false)
