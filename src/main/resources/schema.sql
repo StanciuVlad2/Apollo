@@ -95,3 +95,21 @@ CREATE INDEX IF NOT EXISTS idx_orders_table ON orders(table_id);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_restaurant_tables_active ON restaurant_tables(is_active);
+
+-- FEEDBACK
+CREATE TABLE IF NOT EXISTS feedback (
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    food_quality_rating VARCHAR(20) NOT NULL,
+    service_speed_rating VARCHAR(20) NOT NULL,
+    would_recommend BOOLEAN NOT NULL DEFAULT FALSE,
+    comment TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT feedback_food_quality_check CHECK (food_quality_rating IN ('POOR', 'BELOW_AVERAGE', 'AVERAGE', 'GOOD', 'EXCELLENT')),
+    CONSTRAINT feedback_service_speed_check CHECK (service_speed_rating IN ('SLOW', 'ADEQUATE', 'FAST'))
+);
+
+-- INDEXURI PENTRU FEEDBACK
+CREATE INDEX IF NOT EXISTS idx_feedback_order ON feedback(order_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id);
