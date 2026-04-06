@@ -56,11 +56,11 @@ spring:
 
 app:
   token:
+    secret: "MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!"
     issuer: "restaurant-app"
     ttl-minutes: 30
   upload:
     dir: uploads/menu-images
-    rotate-on-login: false
   email:
     from: odin.dining@gmail.com
     verification:

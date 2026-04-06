@@ -40,6 +40,6 @@ management:
 
 app:
   token:
+    secret: "MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!"
     issuer: "restaurant-app"
     ttl-minutes: 30
-    rotate-on-login: false

@@ -35,7 +35,7 @@ public class AuthController {
     private final EmailService emailService;
     private final EmailVerificationTokenRepository verificationTokenRepository;
 
-    public AuthController(UserRepository users, PasswordEncoder encoder, TokenService tokenService, 
+    public AuthController(UserRepository users, PasswordEncoder encoder, TokenService tokenService,
                          EmailService emailService, EmailVerificationTokenRepository verificationTokenRepository) {
         this.users = users;
         this.encoder = encoder;
@@ -54,8 +54,7 @@ public class AuthController {
         if (req.password() == null || req.password().length() < 6) {
             return ResponseEntity.badRequest().body("Password too short");
         }
-        
-        // Create user — verified immediately if admin is creating it
+
         User u = User.builder()
                 .email(email)
                 .password(encoder.encode(req.password()))
@@ -77,16 +76,14 @@ public class AuthController {
                 .used(false)
                 .build();
         verificationTokenRepository.save(verificationToken);
-        
-        // Send verification email
+
         try {
             emailService.sendVerificationEmail(email, token);
             log.info("Verification email sent to: {}", email);
         } catch (Exception e) {
             log.error("Failed to send verification email", e);
-            // Continue registration even if email fails
         }
-        
+
         return ResponseEntity.ok().body("Registration successful. Please check your email to verify your account.");
     }
 
@@ -97,28 +94,26 @@ public class AuthController {
         if (!encoder.matches(req.password(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
         }
-        
-        // Check if email is verified
+
         if (!user.isEmailVerified()) {
             return ResponseEntity.status(403).body("Please verify your email before logging in. Check your inbox.");
         }
-        
+
         var issued = tokenService.issue(user);
         return ResponseEntity.ok(new AuthResponse(issued.rawToken(), issued.expiresInSeconds()));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader(name = "Authorization", required = false) String auth) {
-        if (auth != null && auth.startsWith("Bearer ")) {
-            tokenService.revoke(auth.substring(7));
-        }
+    public ResponseEntity<?> logout() {
+        // JWT is stateless — the client simply discards the token.
+        // This endpoint exists for API compatibility.
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
     public ResponseEntity<MeResponse> me(Principal principal) {
         if (principal == null) {
-            return ResponseEntity.ok(new MeResponse(false, null, java.util.Set.of()));
+            return ResponseEntity.ok(new MeResponse(false, null, Set.of()));
         }
         var user = users.findByEmail(principal.getName()).orElseThrow();
         return ResponseEntity.ok(new MeResponse(true, user.getEmail(), user.getRoles()));
@@ -138,12 +133,10 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Token expired");
         }
 
-        // Mark user as verified
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
         users.save(user);
 
-        // Mark token as used
         verificationToken.setUsed(true);
         verificationTokenRepository.save(verificationToken);
 
