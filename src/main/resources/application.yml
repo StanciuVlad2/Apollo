@@ -68,3 +68,9 @@ app:
   gemini:
     api-key: ${GEMINI_API_KEY:secretKey}
     model: gemini-2.5-flash
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
