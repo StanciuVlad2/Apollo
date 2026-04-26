@@ -1,0 +1,27 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: reservations-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/restaurant?currentSchema=reservations
+    username: ${DB_USER:restaurant}
+    password: ${DB_PASS:restaurant}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: reservations
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  token:
+    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    issuer: restaurant-app
+    ttl-minutes: 30
