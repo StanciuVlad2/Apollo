@@ -57,7 +57,9 @@ public class UserManagementService {
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
-                result.getTotalPages()
+                result.getTotalPages(),
+                result.isFirst(),
+                result.isLast()
         );
     }
 

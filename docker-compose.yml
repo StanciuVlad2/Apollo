@@ -1,66 +1,177 @@
-version: "3.9"
-
 services:
-
-  # ── PostgreSQL ────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
-    container_name: restaurant-postgres
+    image: postgres:16
     environment:
       POSTGRES_DB: restaurant
       POSTGRES_USER: restaurant
       POSTGRES_PASSWORD: restaurant
     ports:
       - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - apollo-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U restaurant -d restaurant -h localhost -p 5432 || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  # ── Elasticsearch ─────────────────────────────────────────────────────────
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.6
-    container_name: restaurant-elasticsearch
-    environment:
-      - discovery.type=single-node          # fara cluster multi-nod
-      - xpack.security.enabled=false        # dezactivam auth (dev only)
-      - xpack.security.http.ssl.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m     # limite RAM rezonabile
-      - cluster.name=restaurant-cluster
-      - bootstrap.memory_lock=true
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    ports:
-      - "9200:9200"
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1"]
+      test: ["CMD", "pg_isready", "-U", "restaurant"]
       interval: 10s
-      timeout: 10s
-      retries: 20
-      start_period: 40s
+      retries: 5
 
-  # ── Kibana ────────────────────────────────────────────────────────────────
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.18.6
-    container_name: restaurant-kibana
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - discovery.type=single-node
       - xpack.security.enabled=false
     ports:
-      - "5601:5601"
-    restart: unless-stopped
+      - "9200:9200"
+    networks:
+      - apollo-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      retries: 10
 
-volumes:
-  pgdata:
-  esdata:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - apollo-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - apollo-network
+
+  eureka-server:
+    build: eureka-server/
+    ports:
+      - "8761:8761"
+    networks:
+      - apollo-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      retries: 10
+
+  auth-service:
+    build: auth-service/
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+      - MAIL_USER=${MAIL_USER:-odin.dining@gmail.com}
+      - MAIL_PASS=${MAIL_PASS:-uvza whcd cayb hmdn}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  operations-service:
+    build: operations-service/
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - ES_HOST=elasticsearch
+      - KAFKA_BOOTSTRAP=kafka:9092
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  reservations-service:
+    build: reservations-service/
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  feedback-service:
+    build: feedback-service/
+    ports:
+      - "8084:8084"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - KAFKA_BOOTSTRAP=kafka:9092
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  cocktails-service:
+    build: cocktails-service/
+    ports:
+      - "8085:8085"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-your-api-key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  api-gateway:
+    build: api-gateway/
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+networks:
+  apollo-network:
+    name: apollo-network
+    driver: bridge
