@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: restaurant
+      POSTGRES_USER: restaurant
+      POSTGRES_PASSWORD: restaurant
+    ports:
+      - "5432:5432"
+    networks:
+      - apollo-network
+
+  eureka-server:
+    image: apollo/eureka-server:latest
+    ports:
+      - "8761:8761"
+    networks:
+      - apollo-network
+
+  auth-service:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!
+    depends_on:
+      - postgres
+      - eureka-server
+    networks:
+      - apollo-network
+
+networks:
+  apollo-network:
+    name: apollo-network
+    driver: bridge

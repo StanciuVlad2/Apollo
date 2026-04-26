@@ -1,0 +1,40 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/restaurant?currentSchema=auth
+    username: ${DB_USER:restaurant}
+    password: ${DB_PASS:restaurant}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: auth
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USER:odin.dining@gmail.com}
+    password: ${MAIL_PASS:uvza whcd cayb hmdn}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+    test-connection: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  token:
+    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    issuer: restaurant-app
+    ttl-minutes: 30
+  email:
+    from: ${MAIL_USER:odin.dining@gmail.com}
+    verification:
+      url: ${FRONTEND_URL:http://localhost:5173}/verify-email
