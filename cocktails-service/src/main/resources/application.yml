@@ -1,0 +1,30 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: cocktails-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/restaurant?currentSchema=cocktails
+    username: ${DB_USER:restaurant}
+    password: ${DB_PASS:restaurant}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: cocktails
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  token:
+    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    issuer: restaurant-app
+    ttl-minutes: 30
+  gemini:
+    api-key: ${GEMINI_API_KEY:your-api-key}
+    model: gemini-2.5-flash
