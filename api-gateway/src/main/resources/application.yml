@@ -1,0 +1,52 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**, /api/admin/users/**
+
+        - id: operations-service
+          uri: lb://operations-service
+          predicates:
+            - Path=/api/menu-items/**, /api/orders/**, /api/stock/**
+
+        - id: reservations-service
+          uri: lb://reservations-service
+          predicates:
+            - Path=/api/reservations/**, /api/tables/**
+
+        - id: feedback-service
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/feedback/**
+
+        - id: cocktails-service
+          uri: lb://cocktails-service
+          predicates:
+            - Path=/api/cocktails/**
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:5173"
+            allowedMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+            allowedHeaders: ["Authorization", "Content-Type"]
+            allowCredentials: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  token:
+    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    issuer: restaurant-app
