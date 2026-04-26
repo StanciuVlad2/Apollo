@@ -19,7 +19,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+import com.restaurant.shared.security.UserPrincipal;
+import org.springframework.security.core.Authentication;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -111,11 +112,11 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<MeResponse> me(Principal principal) {
-        if (principal == null) {
+    public ResponseEntity<MeResponse> me(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
             return ResponseEntity.ok(new MeResponse(false, null, Set.of()));
         }
-        var user = users.findByEmail(principal.getName()).orElseThrow();
+        var user = users.findByEmail(userPrincipal.email()).orElseThrow();
         return ResponseEntity.ok(new MeResponse(true, user.getEmail(), user.getRoles()));
     }
 

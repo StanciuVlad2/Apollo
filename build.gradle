@@ -1,13 +1,12 @@
 // build.gradle  (root — version catalog only, no application code)
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.5.6' apply false
+    id 'org.springframework.boot' version '3.4.10' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'maven-publish'
 }
 
 ext {
-    set('springCloudVersion', '2024.0.1')
+    set('springCloudVersion', '2024.0.2')
 }
 
 subprojects {

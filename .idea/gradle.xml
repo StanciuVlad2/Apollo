@@ -9,6 +9,14 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/api-gateway" />
+            <option value="$PROJECT_DIR$/auth-service" />
+            <option value="$PROJECT_DIR$/cocktails-service" />
+            <option value="$PROJECT_DIR$/eureka-server" />
+            <option value="$PROJECT_DIR$/feedback-service" />
+            <option value="$PROJECT_DIR$/operations-service" />
+            <option value="$PROJECT_DIR$/reservations-service" />
+            <option value="$PROJECT_DIR$/shared-lib" />
           </set>
         </option>
       </GradleProjectSettings>
