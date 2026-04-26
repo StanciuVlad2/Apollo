@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: restaurant
+      POSTGRES_USER: restaurant
+      POSTGRES_PASSWORD: restaurant
+    ports:
+      - "5432:5432"
+    networks:
+      - apollo-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - apollo-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - apollo-network
+
+  eureka-server:
+    image: apollo/eureka-server:latest
+    ports:
+      - "8761:8761"
+    networks:
+      - apollo-network
+
+  feedback-service:
+    build: .
+    ports:
+      - "8084:8084"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - KAFKA_BOOTSTRAP=kafka:9092
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+    networks:
+      - apollo-network
+
+networks:
+  apollo-network:
+    name: apollo-network
+    driver: bridge

@@ -1,0 +1,37 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: feedback-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/restaurant?currentSchema=feedback
+    username: ${DB_USER:restaurant}
+    password: ${DB_PASS:restaurant}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: feedback
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    consumer:
+      group-id: feedback-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.restaurant.feedback.kafka"
+        spring.json.value.default.type: "com.restaurant.feedback.kafka.OrderCompletedEvent"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  token:
+    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    issuer: restaurant-app
+    ttl-minutes: 30
