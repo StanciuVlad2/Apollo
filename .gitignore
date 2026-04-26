@@ -1,24 +1,98 @@
-# Compiled class file
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+.git
+.gitignore
+.gradle
+build
+out
+node_modules
+
+.gradle
+.build/
+
+**/*.iml
+.gradle/
+.idea/
+/Dockerfile
+/docker-compose.yml
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+/build/**
+../build/**
+../../build/**
+# Compiled class files
 *.class
 
-# Log file
+# Log files
 *.log
 
-# BlueJ files
-*.ctxt
+# Temporary files
+*.tmp
+*.swp
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Eclipse
+.classpath
+.project
+.settings/
 
-# Package Files #
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+.nb-gradle/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Environment files
+.env
+
+# Docker
+docker-compose.override.yml
+
+# Test / Coverage
+coverage/
+*.cover
+
+# Others
+out/
+generated/
+
+# Ignore application specific local files
+/local.properties
+
+# Ignore IntelliJ run configs and workspace files (if you prefer to keep some .idea files, remove the line above)
+# .idea/**/workspace.xml
+# .idea/**/tasks.xml
+
+# Keep gradle wrapper properties but ignore other wrapper artifacts
+gradle/wrapper/gradle-wrapper.properties
+
+# Ignore target for maven if present
+target/
+
+# Ignore packaged jars
 *.jar
 *.war
-*.nar
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# Ignore build reports
+/reports/
+
+# Optional: ignore database files if present locally
+*.db
+
+# End of .gitignore
+
