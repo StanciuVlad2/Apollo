@@ -1,0 +1,12 @@
+services:
+  eureka-server:
+    build: .
+    ports:
+      - "8761:8761"
+    networks:
+      - apollo-network
+
+networks:
+  apollo-network:
+    name: apollo-network
+    driver: bridge
