@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
@@ -40,6 +41,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     );
 
     List<Reservation> findAllByUserId(Long userId);
+
+    List<Reservation> findByReservationDateBetween(LocalDate from, LocalDate to);
+
+    Optional<Reservation> findByTableIdAndReservationDateAndStatus(
+        Long tableId, LocalDate reservationDate, ReservationStatus status);
 
     @Query("SELECT r FROM Reservation r WHERE r.userId = :userId " +
            "AND r.reservationDate = :today " +

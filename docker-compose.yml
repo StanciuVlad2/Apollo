@@ -114,11 +114,14 @@ services:
       - DB_PASS=restaurant
       - EUREKA_HOST=eureka-server
       - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+      - KAFKA_BOOTSTRAP=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - apollo-network
 
@@ -151,10 +154,59 @@ services:
       - DB_PASS=restaurant
       - EUREKA_HOST=eureka-server
       - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-your-api-key}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyCd8y-pA503Jz6qJOMu2p-hcG5gcjMb_ms}
     depends_on:
       postgres:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  reports-service:
+    build: reports-service/
+    ports:
+      - "8086:8086"
+    environment:
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  settings-service:
+    build: settings-service/
+    ports:
+      - "8088:8088"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
+  notifications-service:
+    build: notifications-service/
+    ports:
+      - "8087:8087"
+    environment:
+      - KAFKA_BOOTSTRAP=kafka:9092
+      - EUREKA_HOST=eureka-server
+      - MAIL_USER=${MAIL_USER:-odin.dining@gmail.com}
+      - MAIL_PASS=${MAIL_PASS:-uvza whcd cayb hmdn}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      kafka:
+        condition: service_started
       eureka-server:
         condition: service_healthy
     networks:

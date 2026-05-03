@@ -1,5 +1,7 @@
 package com.restaurant.operations.stock.service;
 
+import com.restaurant.operations.stock.dto.RowError;
+import com.restaurant.operations.stock.dto.StockImportResult;
 import com.restaurant.operations.stock.dto.StockItemRequest;
 import com.restaurant.operations.stock.dto.StockItemResponse;
 import com.restaurant.operations.stock.model.StockItem;
@@ -7,14 +9,22 @@ import com.restaurant.operations.stock.model.StockType;
 import com.restaurant.operations.stock.repository.StockItemRepository;
 import com.restaurant.shared.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
@@ -103,6 +113,117 @@ public class StockItemService {
             throw new NoSuchElementException("Stock item not found: " + id);
         }
         stockItemRepository.deleteById(id);
+    }
+
+    public StockImportResult importCsv(MultipartFile file) throws IOException {
+        int created = 0;
+        int updated = 0;
+        int failed = 0;
+        List<RowError> errors = new ArrayList<>();
+
+        try (InputStreamReader reader = new InputStreamReader(file.getInputStream());
+             CSVParser csvParser = CSVFormat.DEFAULT
+                     .withFirstRecordAsHeader()
+                     .parse(reader)) {
+
+            int rowNumber = 1; // Exclude header
+            for (CSVRecord record : csvParser) {
+                rowNumber++;
+
+                // Parse fields
+                String name = record.get("name").trim();
+                String quantityStr = record.get("quantity").trim();
+                String unit = record.get("unit").trim();
+                String typeStr = record.get("type").trim();
+                String minimumThresholdStr = record.get("minimumThreshold").trim();
+
+                // Validation
+                List<String> validationErrors = new ArrayList<>();
+
+                if (name.isBlank()) {
+                    validationErrors.add("Name is required");
+                }
+
+                StockType type = null;
+                try {
+                    type = StockType.valueOf(typeStr.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    validationErrors.add("Type must be SOLID, LIQUID, or PORTION");
+                }
+
+                if (unit.isBlank()) {
+                    validationErrors.add("Unit is required");
+                } else if (type != null && !isUnitCompatibleWithType(unit, type)) {
+                    validationErrors.add("Unit '" + unit + "' is not compatible with type " + type);
+                }
+
+                Double quantity = null;
+                try {
+                    quantity = Double.parseDouble(quantityStr);
+                    if (quantity <= 0) {
+                        validationErrors.add("Quantity must be positive");
+                    }
+                } catch (NumberFormatException e) {
+                    validationErrors.add("Quantity must be a valid number");
+                }
+
+                Double minimumThreshold = null;
+                if (!minimumThresholdStr.isBlank()) {
+                    try {
+                        minimumThreshold = Double.parseDouble(minimumThresholdStr);
+                        if (minimumThreshold <= 0) {
+                            validationErrors.add("Minimum threshold must be positive");
+                        }
+                    } catch (NumberFormatException e) {
+                        validationErrors.add("Minimum threshold must be a valid number");
+                    }
+                }
+
+                if (!validationErrors.isEmpty()) {
+                    errors.add(new RowError(rowNumber, String.join("; ", validationErrors)));
+                    failed++;
+                    continue;
+                }
+
+                // Upsert logic
+                try {
+                    Optional<StockItem> existing = stockItemRepository.findByNameIgnoreCase(name);
+                    if (existing.isPresent()) {
+                        StockItem item = existing.get();
+                        item.setQuantity(quantity);
+                        item.setUnit(unit);
+                        item.setType(type);
+                        item.setMinimumThreshold(minimumThreshold);
+                        stockItemRepository.save(item);
+                        updated++;
+                    } else {
+                        StockItem newItem = StockItem.builder()
+                                .name(name.toLowerCase().trim())
+                                .quantity(quantity)
+                                .unit(unit)
+                                .type(type)
+                                .minimumThreshold(minimumThreshold)
+                                .build();
+                        stockItemRepository.save(newItem);
+                        created++;
+                    }
+                } catch (Exception e) {
+                    errors.add(new RowError(rowNumber, "Database error: " + e.getMessage()));
+                    failed++;
+                }
+            }
+        }
+
+        return new StockImportResult(created, updated, failed, errors);
+    }
+
+    private boolean isUnitCompatibleWithType(String unit, StockType type) {
+        String u = unit.toLowerCase();
+        return switch (type) {
+            case SOLID -> WEIGHT_TO_GRAMS.containsKey(u);
+            case LIQUID -> VOLUME_TO_ML.containsKey(u);
+            case PORTION -> COUNT_UNITS.contains(u);
+        };
     }
 
     // -----------------------------------------------------------------------

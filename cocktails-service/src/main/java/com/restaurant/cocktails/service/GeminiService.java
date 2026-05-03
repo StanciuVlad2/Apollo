@@ -1,12 +1,14 @@
 package com.restaurant.cocktails.service;
 
-import com.restaurant.cocktails.dto.CocktailResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.restaurant.cocktails.dto.CocktailResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +34,22 @@ public class GeminiService {
 
     public CocktailResponse generateCocktail(String userDescription) {
         try {
+            validateConfiguration();
             String prompt = buildPrompt(userDescription);
             String response = callGeminiAPI(prompt);
             return parseCocktailResponse(response);
         } catch (Exception e) {
             log.error("Error generating cocktail", e);
-            throw new RuntimeException("Failed to generate cocktail: " + e.getMessage());
+            throw new RuntimeException("Failed to generate cocktail: " + e.getMessage(), e);
+        }
+    }
+
+    private void validateConfiguration() {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("Gemini API key is missing. Set GEMINI_API_KEY or app.gemini.api-key.");
+        }
+        if (model == null || model.isBlank()) {
+            throw new IllegalStateException("Gemini model is missing. Set app.gemini.model.");
         }
     }
 
@@ -83,8 +95,20 @@ public class GeminiService {
             .header("Content-Type", "application/json")
             .bodyValue(requestBody)
             .retrieve()
+            .onStatus(HttpStatusCode::isError, clientResponse ->
+                clientResponse.bodyToMono(String.class)
+                    .defaultIfEmpty("")
+                    .flatMap(body -> Mono.error(new IllegalStateException(
+                        "Gemini API request failed with HTTP " + clientResponse.statusCode()
+                            + (body.isBlank() ? "" : ": " + body)
+                    )))
+            )
             .bodyToMono(String.class)
             .block();
+
+        if (response == null || response.isBlank()) {
+            throw new IllegalStateException("Empty response from Gemini API");
+        }
 
         log.info("Gemini API response: {}", response);
         return response;
@@ -92,33 +116,29 @@ public class GeminiService {
 
     private CocktailResponse parseCocktailResponse(String apiResponse) {
         try {
+            if (apiResponse == null || apiResponse.isBlank()) {
+                throw new IllegalStateException("Empty Gemini API payload");
+            }
+
             JsonNode root = objectMapper.readTree(apiResponse);
             JsonNode candidates = root.path("candidates");
 
-            if (candidates.isEmpty()) {
+            if (!candidates.isArray() || candidates.isEmpty()) {
                 throw new RuntimeException("No response from Gemini API");
             }
 
-            String generatedText = candidates.get(0)
-                .path("content")
-                .path("parts")
-                .get(0)
-                .path("text")
-                .asText();
+            JsonNode content = candidates.get(0).path("content");
+            JsonNode parts = content.path("parts");
+            if (!parts.isArray() || parts.isEmpty()) {
+                throw new RuntimeException("Gemini response did not contain generated text");
+            }
 
-            // Extract JSON from potential markdown code blocks
-            String jsonText = generatedText.trim();
-            if (jsonText.startsWith("```json")) {
-                jsonText = jsonText.substring(7);
+            String generatedText = parts.get(0).path("text").asText(null);
+            if (generatedText == null || generatedText.isBlank()) {
+                throw new RuntimeException("Gemini response text was empty");
             }
-            if (jsonText.startsWith("```")) {
-                jsonText = jsonText.substring(3);
-            }
-            if (jsonText.endsWith("```")) {
-                jsonText = jsonText.substring(0, jsonText.length() - 3);
-            }
-            jsonText = jsonText.trim();
 
+            String jsonText = stripMarkdownCodeFences(generatedText.trim());
             JsonNode cocktailJson = objectMapper.readTree(jsonText);
 
             CocktailResponse cocktailResponse = new CocktailResponse();
@@ -136,7 +156,21 @@ public class GeminiService {
             return cocktailResponse;
         } catch (Exception e) {
             log.error("Error parsing Gemini response", e);
-            throw new RuntimeException("Failed to parse cocktail response: " + e.getMessage());
+            throw new RuntimeException("Failed to parse cocktail response: " + e.getMessage(), e);
         }
+    }
+
+    private String stripMarkdownCodeFences(String text) {
+        String jsonText = text;
+        if (jsonText.startsWith("```json")) {
+            jsonText = jsonText.substring(7);
+        }
+        if (jsonText.startsWith("```")) {
+            jsonText = jsonText.substring(3);
+        }
+        if (jsonText.endsWith("```")) {
+            jsonText = jsonText.substring(0, jsonText.length() - 3);
+        }
+        return jsonText.trim();
     }
 }

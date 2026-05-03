@@ -28,5 +28,5 @@ app:
     issuer: restaurant-app
     ttl-minutes: 30
   gemini:
-    api-key: ${GEMINI_API_KEY:your-api-key}
+    api-key: ${GEMINI_API_KEY:AIzaSyCd8y-pA503Jz6qJOMu2p-hcG5gcjMb_ms}
     model: gemini-2.5-flash

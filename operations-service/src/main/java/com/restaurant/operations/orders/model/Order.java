@@ -34,6 +34,12 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "customer_email")
+    private String customerEmail;
+
+    @Column(name = "reservation_id")
+    private Long reservationId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

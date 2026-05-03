@@ -1,5 +1,7 @@
 package com.restaurant.operations.stock.controller;
 
+import com.restaurant.operations.stock.dto.RowError;
+import com.restaurant.operations.stock.dto.StockImportResult;
 import com.restaurant.operations.stock.dto.StockItemRequest;
 import com.restaurant.operations.stock.dto.StockItemResponse;
 import com.restaurant.operations.stock.service.StockItemService;
@@ -10,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -64,5 +68,14 @@ public class StockItemController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         stockItemService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<StockImportResult> importCsv(@RequestParam("file") MultipartFile file) {
+        try {
+            return ResponseEntity.ok(stockItemService.importCsv(file));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to parse CSV file: " + e.getMessage());
+        }
     }
 }

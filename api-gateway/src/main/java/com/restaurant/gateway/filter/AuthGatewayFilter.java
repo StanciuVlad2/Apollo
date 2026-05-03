@@ -28,7 +28,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/login", "/api/auth/register", "/api/cocktails/generate"
     );
     private static final List<String> PUBLIC_GET_PREFIXES = List.of(
-            "/api/auth/verify-email", "/api/menu-items", "/api/tables"
+            "/api/auth/verify-email", "/api/menu-items", "/api/tables", "/api/settings", "/api/stock/events"
     );
 
     public AuthGatewayFilter(

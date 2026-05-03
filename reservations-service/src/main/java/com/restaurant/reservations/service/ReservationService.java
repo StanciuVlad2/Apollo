@@ -3,6 +3,8 @@ package com.restaurant.reservations.service;
 import com.restaurant.reservations.dto.*;
 import com.restaurant.reservations.enums.ReservationStatus;
 import com.restaurant.reservations.enums.TimeSlot;
+import com.restaurant.reservations.kafka.ReservationEvent;
+import com.restaurant.reservations.kafka.ReservationEventProducer;
 import com.restaurant.reservations.model.Reservation;
 import com.restaurant.reservations.model.RestaurantTable;
 import com.restaurant.reservations.repository.ReservationRepository;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +30,9 @@ public class ReservationService {
 
     @Autowired
     private RestaurantTableRepository tableRepository;
+
+    @Autowired
+    private ReservationEventProducer reservationEventProducer;
 
     @Transactional
     public ReservationResponse createReservation(CreateReservationRequest request) {
@@ -88,6 +94,20 @@ public class ReservationService {
         reservation.setNotes(request.getNotes());
 
         Reservation savedReservation = reservationRepository.save(reservation);
+
+        if (savedReservation.getCustomerEmail() != null) {
+            reservationEventProducer.publish(new ReservationEvent(
+                "CONFIRMED",
+                savedReservation.getCustomerEmail(),
+                savedReservation.getCustomerName(),
+                savedReservation.getPartySize(),
+                savedReservation.getReservationDate(),
+                savedReservation.getStartTime(),
+                savedReservation.getEndTime(),
+                null
+            ));
+        }
+
         return mapToResponse(savedReservation);
     }
 
@@ -163,7 +183,7 @@ public class ReservationService {
     }
 
     @Transactional
-    public ReservationResponse cancelReservation(Long reservationId) {
+    public ReservationResponse cancelReservation(Long reservationId, String cancelReason) {
         Long currentUserId = UserHolder.getCurrentUser().userId();
         boolean isManager = UserHolder.getCurrentUser().roles().contains("ROLE_MANAGER")
                 || UserHolder.getCurrentUser().roles().contains("ROLE_ADMIN");
@@ -177,8 +197,29 @@ public class ReservationService {
         }
 
         reservation.setStatus(ReservationStatus.CANCELLED);
+        reservation.setCancelReason(cancelReason);
         Reservation updated = reservationRepository.save(reservation);
+
+        if (reservation.getCustomerEmail() != null) {
+            reservationEventProducer.publish(new ReservationEvent(
+                "CANCELLED",
+                reservation.getCustomerEmail(),
+                reservation.getCustomerName(),
+                reservation.getPartySize(),
+                reservation.getReservationDate(),
+                reservation.getStartTime(),
+                reservation.getEndTime(),
+                cancelReason
+            ));
+        }
+
         return mapToResponse(updated);
+    }
+
+    public Optional<ReservationResponse> getActiveReservationForTable(Long tableId, LocalDate date) {
+        return reservationRepository.findByTableIdAndReservationDateAndStatus(
+                tableId, date, ReservationStatus.CONFIRMED)
+            .map(this::mapToResponse);
     }
 
     private ReservationResponse mapToResponse(Reservation reservation) {
@@ -196,6 +237,7 @@ public class ReservationService {
         response.setEndTime(reservation.getEndTime());
         response.setStatus(reservation.getStatus().name());
         response.setNotes(reservation.getNotes());
+        response.setCancelReason(reservation.getCancelReason());
         return response;
     }
 }

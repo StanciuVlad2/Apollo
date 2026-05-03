@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -54,8 +55,21 @@ public class ReservationController {
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<ReservationResponse> cancelReservation(@PathVariable Long id) {
-        ReservationResponse response = reservationService.cancelReservation(id);
+    public ResponseEntity<ReservationResponse> cancelReservation(
+            @PathVariable Long id,
+            @RequestBody(required = false) CancelReservationRequest request) {
+        String cancelReason = request != null ? request.getCancelReason() : null;
+        ReservationResponse response = reservationService.cancelReservation(id, cancelReason);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/active-for-table")
+    @PreAuthorize("hasAnyRole('WAITER','CHEF','MANAGER','ADMIN')")
+    public ResponseEntity<ReservationResponse> getActiveReservationForTable(
+            @RequestParam Long tableId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return reservationService.getActiveReservationForTable(tableId, date)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
     }
 }

@@ -20,7 +20,9 @@ public class SecurityConfig extends BaseSecurityConfig {
         super.configure(http);
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/menu-items", "/api/menu-items/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/stock/events").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/stock/import").hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
         );

@@ -1,0 +1,23 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: reports-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  mvc:
+    contentnegotiation:
+      default-content-type: application/json
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  token:
+    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    issuer: restaurant-app
+    ttl-minutes: 30

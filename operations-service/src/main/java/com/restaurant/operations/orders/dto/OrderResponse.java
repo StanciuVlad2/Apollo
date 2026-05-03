@@ -9,6 +9,8 @@ public record OrderResponse(
         Long userId,
         String status,
         String notes,
+        String customerEmail,
+        Long reservationId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         List<OrderItemResponse> items,

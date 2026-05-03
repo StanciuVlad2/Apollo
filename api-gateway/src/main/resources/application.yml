@@ -35,6 +35,16 @@ spring:
           predicates:
             - Path=/api/cocktails/**
 
+        - id: reports-service
+          uri: lb://reports-service
+          predicates:
+            - Path=/api/reports/**
+
+        - id: settings-service
+          uri: lb://settings-service
+          predicates:
+            - Path=/api/settings/**
+
       globalcors:
         cors-configurations:
           '[/**]':

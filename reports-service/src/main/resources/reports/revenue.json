@@ -1,0 +1,17 @@
+{
+  "id": "revenue",
+  "label": "Raport Vânzări & Revenue",
+  "dataSource": "OPERATIONS",
+  "sections": [
+    {
+      "type": "SUMMARY",
+      "fields": ["totalOrders", "completedOrders", "cancelledOrders", "totalRevenue", "avgOrderValue"]
+    },
+    {
+      "type": "TABLE",
+      "title": "Top Produse Vândute",
+      "fields": ["itemName", "quantitySold", "revenue"],
+      "limit": 10
+    }
+  ]
+}

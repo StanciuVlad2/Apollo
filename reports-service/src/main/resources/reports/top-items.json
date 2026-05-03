@@ -1,0 +1,17 @@
+{
+  "id": "top-items",
+  "label": "Top Produse Vândute",
+  "dataSource": "OPERATIONS",
+  "sections": [
+    {
+      "type": "SUMMARY",
+      "fields": ["totalOrders", "totalRevenue"]
+    },
+    {
+      "type": "TABLE",
+      "title": "Toate Produsele Vândute",
+      "fields": ["itemName", "quantitySold", "revenue"],
+      "limit": 20
+    }
+  ]
+}

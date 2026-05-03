@@ -1,0 +1,35 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: notifications-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    consumer:
+      group-id: notifications-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USER:odin.dining@gmail.com}
+    password: ${MAIL_PASS:uvza whcd cayb hmdn}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+    test-connection: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+app:
+  email:
+    from: ${MAIL_USER:odin.dining@gmail.com}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:5173}

@@ -15,8 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.restaurant.operations.orders.dto.OrderReportData;
+import com.restaurant.operations.orders.dto.TopItemData;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Service
@@ -63,6 +69,8 @@ public class OrderService {
                 .notes(request.notes())
                 .items(new ArrayList<>())
                 .build();
+        order.setCustomerEmail(request.customerEmail());
+        order.setReservationId(request.reservationId());
 
         Order savedOrder = orderRepository.save(order);
 
@@ -103,6 +111,10 @@ public class OrderService {
                     "Cannot change status of a " + order.getStatus().name().toLowerCase() + " order.");
         }
 
+        if (target == OrderStatus.READY && order.getCustomerEmail() != null) {
+            orderEventProducer.publishOrderReady(order.getId(), order.getTableId(), order.getCustomerEmail());
+        }
+
         if (target == OrderStatus.COMPLETED) {
             deductStock(order);
             orderEventProducer.publishOrderCompleted(order.getId(), order.getUserId());
@@ -110,6 +122,40 @@ public class OrderService {
 
         order.setStatus(target);
         return toResponse(orderRepository.save(order));
+    }
+
+    public OrderReportData generateReport(LocalDate from, LocalDate to) {
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.plusDays(1).atStartOfDay();
+        List<Order> orders = orderRepository.findByCreatedAtBetween(start, end);
+
+        long completed = orders.stream().filter(o -> o.getStatus() == OrderStatus.COMPLETED).count();
+        long cancelled = orders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count();
+        double totalRevenue = orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.COMPLETED)
+                .flatMap(o -> o.getItems().stream())
+                .mapToDouble(i -> i.getUnitPrice() * i.getQuantity())
+                .sum();
+        double avg = orders.isEmpty() ? 0.0 : Math.round((totalRevenue / orders.size()) * 100.0) / 100.0;
+
+        Map<String, long[]> itemMap = new LinkedHashMap<>();
+        Map<String, double[]> itemRevMap = new LinkedHashMap<>();
+        orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.COMPLETED)
+                .flatMap(o -> o.getItems().stream())
+                .forEach(i -> {
+                    itemMap.computeIfAbsent(i.getMenuItemName(), k -> new long[]{0})[0] += i.getQuantity();
+                    itemRevMap.computeIfAbsent(i.getMenuItemName(), k -> new double[]{0.0})[0] += i.getUnitPrice() * i.getQuantity();
+                });
+
+        List<TopItemData> topItems = itemMap.entrySet().stream()
+                .map(e -> new TopItemData(e.getKey(), e.getValue()[0],
+                        Math.round(itemRevMap.get(e.getKey())[0] * 100.0) / 100.0))
+                .sorted((a, b) -> Long.compare(b.quantitySold(), a.quantitySold()))
+                .toList();
+
+        return new OrderReportData(orders.size(), completed, cancelled,
+                Math.round(totalRevenue * 100.0) / 100.0, avg, topItems);
     }
 
     // -- Internal helpers ---------------------------------------------------
@@ -147,7 +193,7 @@ public class OrderService {
             return OrderStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid order status: " + status +
-                    ". Allowed values: PENDING, COMPLETED, CANCELLED");
+                    ". Allowed values: PENDING, READY, COMPLETED, CANCELLED");
         }
     }
 
@@ -173,6 +219,8 @@ public class OrderService {
                 order.getUserId(),
                 order.getStatus().name(),
                 order.getNotes(),
+                order.getCustomerEmail(),
+                order.getReservationId(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 itemResponses,

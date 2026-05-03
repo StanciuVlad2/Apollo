@@ -1,0 +1,17 @@
+{
+  "id": "reservations",
+  "label": "Raport Rezervări",
+  "dataSource": "RESERVATIONS",
+  "sections": [
+    {
+      "type": "SUMMARY",
+      "fields": ["totalReservations", "avgPartySize"]
+    },
+    {
+      "type": "TABLE",
+      "title": "Rezervări pe Zile",
+      "fields": ["date", "count", "avgPartySize"],
+      "limit": 31
+    }
+  ]
+}

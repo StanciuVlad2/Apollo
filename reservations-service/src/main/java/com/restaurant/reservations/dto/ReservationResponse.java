@@ -17,6 +17,7 @@ public class ReservationResponse {
     private LocalTime endTime;
     private String status;
     private String notes;
+    private String cancelReason;
 
     // Getters and Setters
     public Long getId() {
@@ -121,5 +122,13 @@ public class ReservationResponse {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 }
