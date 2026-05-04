@@ -15,7 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.restaurant.operations.orders.dto.AggregatedItemResponse;
 import com.restaurant.operations.orders.dto.OrderReportData;
+import com.restaurant.operations.orders.dto.ReservationBillResponse;
 import com.restaurant.operations.orders.dto.TopItemData;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -90,11 +93,14 @@ public class OrderService {
         return toResponse(orderRepository.save(savedOrder));
     }
 
-    /**
-     * Transitions an order to a new status.
-     * When the status changes to COMPLETED, recipe ingredients are deducted from stock
-     * and an order.completed Kafka event is published.
-     */
+    private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
+            OrderStatus.PENDING,   Set.of(OrderStatus.READY, OrderStatus.CANCELLED),
+            OrderStatus.READY,     Set.of(OrderStatus.BILLED, OrderStatus.CANCELLED),
+            OrderStatus.BILLED,    Set.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED),
+            OrderStatus.COMPLETED, Set.of(),
+            OrderStatus.CANCELLED, Set.of()
+    );
+
     @Transactional
     public OrderResponse updateStatus(Long id, String newStatus) {
         Order order = orderRepository.findById(id)
@@ -106,9 +112,10 @@ public class OrderService {
             return toResponse(order);
         }
 
-        if (order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED) {
+        Set<OrderStatus> allowed = ALLOWED_TRANSITIONS.getOrDefault(order.getStatus(), Set.of());
+        if (!allowed.contains(target)) {
             throw new IllegalStateException(
-                    "Cannot change status of a " + order.getStatus().name().toLowerCase() + " order.");
+                    "Cannot transition from " + order.getStatus().name() + " to " + target.name() + ".");
         }
 
         if (target == OrderStatus.READY && order.getCustomerEmail() != null) {
@@ -122,6 +129,44 @@ public class OrderService {
 
         order.setStatus(target);
         return toResponse(orderRepository.save(order));
+    }
+
+    @Transactional
+    public List<OrderResponse> billReservation(Long reservationId) {
+        List<Order> eligible = orderRepository.findByReservationId(reservationId).stream()
+                .filter(o -> o.getStatus() != OrderStatus.COMPLETED && o.getStatus() != OrderStatus.CANCELLED)
+                .toList();
+        for (Order order : eligible) {
+            order.setStatus(OrderStatus.BILLED);
+        }
+        return orderRepository.saveAll(eligible).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public ReservationBillResponse getReservationBill(Long reservationId) {
+        List<Order> orders = orderRepository.findByReservationId(reservationId);
+        List<OrderResponse> orderResponses = orders.stream().map(this::toResponse).toList();
+
+        Map<String, AggregatedItemResponse> aggregated = new LinkedHashMap<>();
+        for (OrderResponse order : orderResponses) {
+            for (var item : order.items()) {
+                aggregated.merge(
+                        item.menuItemId(),
+                        new AggregatedItemResponse(item.menuItemId(), item.menuItemName(), item.quantity(), item.unitPrice(), item.subtotal()),
+                        (existing, incoming) -> new AggregatedItemResponse(
+                                existing.menuItemId(),
+                                existing.menuItemName(),
+                                existing.totalQuantity() + incoming.totalQuantity(),
+                                existing.unitPrice(),
+                                existing.subtotal() + incoming.subtotal()
+                        )
+                );
+            }
+        }
+
+        double grandTotal = aggregated.values().stream().mapToDouble(AggregatedItemResponse::subtotal).sum();
+        return new ReservationBillResponse(reservationId, orderResponses, List.copyOf(aggregated.values()), grandTotal);
     }
 
     public OrderReportData generateReport(LocalDate from, LocalDate to) {

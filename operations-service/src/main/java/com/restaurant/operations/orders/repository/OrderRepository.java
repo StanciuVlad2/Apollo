@@ -13,4 +13,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByOrderByCreatedAtDesc();
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
     List<Order> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+    List<Order> findByReservationId(Long reservationId);
 }

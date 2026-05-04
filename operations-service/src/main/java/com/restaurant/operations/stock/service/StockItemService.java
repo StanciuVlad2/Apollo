@@ -122,8 +122,10 @@ public class StockItemService {
         List<RowError> errors = new ArrayList<>();
 
         try (InputStreamReader reader = new InputStreamReader(file.getInputStream());
-             CSVParser csvParser = CSVFormat.DEFAULT
-                     .withFirstRecordAsHeader()
+             CSVParser csvParser = CSVFormat.DEFAULT.builder()
+                     .setHeader()
+                     .setSkipHeaderRecord(true)
+                     .build()
                      .parse(reader)) {
 
             int rowNumber = 1; // Exclude header

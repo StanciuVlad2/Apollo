@@ -24,6 +24,7 @@ public class User {
     @Column(name = "role")
     private Set<String> roles;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean emailVerified = false;
 

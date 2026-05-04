@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: restaurant
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - apollo-network
     healthcheck:
@@ -23,6 +25,8 @@ services:
       - xpack.security.enabled=false
     ports:
       - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - apollo-network
     healthcheck:
@@ -115,6 +119,7 @@ services:
       - EUREKA_HOST=eureka-server
       - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
       - KAFKA_BOOTSTRAP=kafka:9092
+      - TZ=Europe/Bucharest
     depends_on:
       postgres:
         condition: service_healthy
@@ -194,6 +199,27 @@ services:
     networks:
       - apollo-network
 
+  vouchers-service:
+    build: vouchers-service/
+    ports:
+      - "8089:8089"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=restaurant
+      - DB_PASS=restaurant
+      - KAFKA_BOOTSTRAP=kafka:9092
+      - EUREKA_HOST=eureka-server
+      - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - apollo-network
+
   notifications-service:
     build: notifications-service/
     ports:
@@ -224,6 +250,10 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
 
 networks:
   apollo-network:

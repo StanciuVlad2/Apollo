@@ -2,6 +2,7 @@ package com.restaurant.notifications.consumer;
 
 import com.restaurant.notifications.kafka.OrderReadyEvent;
 import com.restaurant.notifications.kafka.ReservationEvent;
+import com.restaurant.notifications.kafka.VoucherIssuedEvent;
 import com.restaurant.notifications.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,5 +30,11 @@ public class NotificationConsumer {
     public void handleOrderReadyEvent(OrderReadyEvent event) {
         log.info("Received order.ready event for orderId={}", event.orderId());
         emailService.sendOrderReady(event);
+    }
+
+    @KafkaListener(topics = "voucher.issued", groupId = "notifications-group", containerFactory = "voucherIssuedKafkaListenerContainerFactory")
+    public void handleVoucherIssuedEvent(VoucherIssuedEvent event) {
+        log.info("Received voucher.issued event code={} email={}", event.code(), event.userEmail());
+        emailService.sendVoucherIssued(event);
     }
 }

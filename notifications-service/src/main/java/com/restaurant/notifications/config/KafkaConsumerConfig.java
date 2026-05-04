@@ -2,6 +2,7 @@ package com.restaurant.notifications.config;
 
 import com.restaurant.notifications.kafka.OrderReadyEvent;
 import com.restaurant.notifications.kafka.ReservationEvent;
+import com.restaurant.notifications.kafka.VoucherIssuedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +58,21 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, OrderReadyEvent> orderReadyKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, OrderReadyEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(orderReadyConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, VoucherIssuedEvent> voucherIssuedConsumerFactory() {
+        Map<String, Object> props = baseConsumerProps();
+        JsonDeserializer<VoucherIssuedEvent> deserializer = new JsonDeserializer<>(VoucherIssuedEvent.class, false);
+        deserializer.addTrustedPackages("*");
+        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, VoucherIssuedEvent> voucherIssuedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, VoucherIssuedEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(voucherIssuedConsumerFactory());
         return factory;
     }
 }

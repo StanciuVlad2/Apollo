@@ -57,4 +57,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         @Param("today") LocalDate today,
         @Param("now") LocalTime now
     );
+
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVICES=(auth-service operations-service reservations-service feedback-service cocktails-service reports-service api-gateway eureka-server)
+SERVICES=(auth-service operations-service reservations-service feedback-service cocktails-service reports-service notifications-service settings-service vouchers-service api-gateway eureka-server)
 NO_BOOTJAR=(eureka-server)
 
 usage() {

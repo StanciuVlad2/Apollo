@@ -10,6 +10,7 @@ import com.restaurant.reservations.model.RestaurantTable;
 import com.restaurant.reservations.repository.ReservationRepository;
 import com.restaurant.reservations.repository.RestaurantTableRepository;
 import com.restaurant.shared.security.UserHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ReservationService {
 
@@ -170,7 +172,10 @@ public class ReservationService {
 
     public List<ReservationResponse> getActiveReservationsForUser(Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        return reservationRepository.findActiveNowForUser(userId, now.toLocalDate(), now.toLocalTime())
+        LocalTime today = LocalTime.now();
+        log.info("Finding active reservations for user {} at {} on {}", userId, today, now.toLocalDate());
+        System.out.println("Finding active reservations for user " + userId + " at " + today + " on " + now.toLocalDate());
+        return reservationRepository.findActiveNowForUser(userId, now.toLocalDate(), today)
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());

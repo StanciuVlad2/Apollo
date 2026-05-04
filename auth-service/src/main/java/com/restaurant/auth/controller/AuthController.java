@@ -120,6 +120,13 @@ public class AuthController {
         return ResponseEntity.ok(new MeResponse(true, user.getEmail(), user.getRoles()));
     }
 
+    @GetMapping("/internal/users/{userId}/email")
+    public ResponseEntity<?> getUserEmail(@PathVariable Long userId) {
+        return users.findById(userId)
+                .map(u -> ResponseEntity.ok(java.util.Map.of("email", u.getEmail())))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/verify-email")
     @Transactional
     public ResponseEntity<?> verifyEmail(@RequestParam String token) {

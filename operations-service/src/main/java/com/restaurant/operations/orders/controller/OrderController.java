@@ -2,6 +2,7 @@ package com.restaurant.operations.orders.controller;
 
 import com.restaurant.operations.orders.dto.CreateOrderRequest;
 import com.restaurant.operations.orders.dto.OrderResponse;
+import com.restaurant.operations.orders.dto.ReservationBillResponse;
 import com.restaurant.operations.orders.dto.UpdateOrderStatusRequest;
 import com.restaurant.operations.orders.service.OrderService;
 import com.restaurant.shared.security.UserHolder;
@@ -58,5 +59,17 @@ public class OrderController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
         return ResponseEntity.ok(orderService.updateStatus(id, request.status()));
+    }
+
+    @PostMapping("/bill-reservation/{reservationId}")
+    @PreAuthorize("hasAnyRole('WAITER','MANAGER','ADMIN')")
+    public ResponseEntity<List<OrderResponse>> billReservation(@PathVariable Long reservationId) {
+        return ResponseEntity.ok(orderService.billReservation(reservationId));
+    }
+
+    @GetMapping("/by-reservation/{reservationId}")
+    @PreAuthorize("hasAnyRole('WAITER','MANAGER','ADMIN')")
+    public ResponseEntity<ReservationBillResponse> getReservationBill(@PathVariable Long reservationId) {
+        return ResponseEntity.ok(orderService.getReservationBill(reservationId));
     }
 }

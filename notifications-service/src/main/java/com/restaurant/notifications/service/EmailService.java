@@ -2,6 +2,7 @@ package com.restaurant.notifications.service;
 
 import com.restaurant.notifications.kafka.OrderReadyEvent;
 import com.restaurant.notifications.kafka.ReservationEvent;
+import com.restaurant.notifications.kafka.VoucherIssuedEvent;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -181,6 +182,63 @@ public class EmailService {
                     ? "<p><strong>📝 Reason:</strong> " + event.cancelReason() + "</p>"
                     : ""
             );
+    }
+
+    public void sendVoucherIssued(VoucherIssuedEvent event) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(event.userEmail());
+            helper.setSubject("🎁 You've earned a voucher at Odin Restaurant!");
+            helper.setText(buildVoucherIssuedTemplate(event), true);
+            mailSender.send(message);
+            log.info("Voucher issued email sent to {}", event.userEmail());
+        } catch (MessagingException e) {
+            log.error("Failed to send voucher issued email to {}", event.userEmail(), e);
+        }
+    }
+
+    private String buildVoucherIssuedTemplate(VoucherIssuedEvent event) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+                    .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+                    .header { background: linear-gradient(135deg, #9c4dcc 0%%, #7b1fa2 100%%); color: white; padding: 40px 30px; text-align: center; }
+                    .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+                    .content { padding: 40px 30px; background: #fdfaf6; }
+                    .content h2 { color: #6a1b9a; margin-top: 0; }
+                    .content p { color: #555; font-size: 16px; margin: 15px 0; }
+                    .voucher-box { background: linear-gradient(135deg, #f3e5f5 0%%, #e1bee7 100%%); border: 2px dashed #9c4dcc; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center; }
+                    .voucher-code { font-size: 32px; font-weight: 800; color: #6a1b9a; letter-spacing: 4px; margin: 8px 0; }
+                    .voucher-value { font-size: 20px; color: #7b1fa2; font-weight: 600; margin: 8px 0; }
+                    .voucher-expiry { font-size: 14px; color: #888; margin-top: 8px; }
+                    .footer { text-align: center; padding: 30px; background: #2d5f3f; color: white; }
+                    .footer p { margin: 5px 0; font-size: 14px; color: #e8f5ea; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header"><h1>🎁 Odin Restaurant</h1></div>
+                    <div class="content">
+                        <h2>You've earned a reward!</h2>
+                        <p>Thank you for your order. As a token of appreciation, here's a voucher for your next visit:</p>
+                        <div class="voucher-box">
+                            <div class="voucher-code">%s</div>
+                            <div class="voucher-value">€%.2f discount</div>
+                            <div class="voucher-expiry">Valid until %s</div>
+                        </div>
+                        <p>You can find all your vouchers in the <strong>My Vouchers</strong> section of your account. Simply copy the code and present it when you ask for the bill.</p>
+                    </div>
+                    <div class="footer"><p>© 2025 Odin Restaurant. All rights reserved.</p><p>Made with ❤️ for food lovers</p></div>
+                </div>
+            </body>
+            </html>
+            """.formatted(event.code(), event.value(), event.expiryDate());
     }
 
     private String buildOrderReadyTemplate(OrderReadyEvent event) {

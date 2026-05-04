@@ -45,6 +45,11 @@ spring:
           predicates:
             - Path=/api/settings/**
 
+        - id: vouchers-service
+          uri: lb://vouchers-service
+          predicates:
+            - Path=/api/vouchers/**
+
       globalcors:
         cors-configurations:
           '[/**]':
