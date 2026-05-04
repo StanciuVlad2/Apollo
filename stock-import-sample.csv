@@ -1,0 +1,31 @@
+name,quantity,unit,type,minimumThreshold
+Flour,25,kg,SOLID,5
+Olive Oil,10,liters,LIQUID,2
+Eggs,100,pieces,PORTION,
+Salt,2,kg,SOLID,0.5
+Butter,5,kg,SOLID,1
+Milk,20,liters,LIQUID,5
+Tomato Sauce,30,liters,LIQUID,10
+Chicken Breast,50,kg,SOLID,10
+Rice,15,kg,SOLID,3
+Black Pepper,0.5,kg,SOLID,0.2
+Garlic,2,kg,SOLID,0.5
+Onion,10,kg,SOLID,2
+Potatoes,30,kg,SOLID,5
+Lettuce,5,kg,SOLID,1
+Cheese,3,kg,SOLID,0.5
+Wine,15,liters,LIQUID,3
+Vinegar,5,liters,LIQUID,1
+Sugar,2,kg,SOLID,0.5
+Coffee Beans,2,kg,SOLID,0.5
+Baking Powder,1,kg,SOLID,0.2
+Vanilla Extract,0.5,liters,LIQUID,
+Orange Juice,10,liters,LIQUID,3
+Apple Cider,5,liters,LIQUID,1
+Mushrooms,5,kg,SOLID,1
+Broccoli,4,kg,SOLID,1
+Carrots,6,kg,SOLID,1.5
+Chicken Stock,30,liters,LIQUID,5
+Beef,20,kg,SOLID,5
+Pork,15,kg,SOLID,3
+Fish Fillet,10,kg,SOLID,2
