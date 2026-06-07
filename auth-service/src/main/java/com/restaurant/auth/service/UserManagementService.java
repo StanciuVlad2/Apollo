@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ public class UserManagementService {
 
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Returns a paginated, filtered list of all users.
@@ -119,5 +121,25 @@ public class UserManagementService {
         emailVerificationTokenRepository.deleteByUser(user);
         userRepository.delete(user);
         log.info("Admin {} deleted user {} ({})", requestingUserEmail, userId, user.getEmail());
+    }
+
+    /**
+     * Creates a pre-verified user account (admin-only).
+     */
+    @Transactional
+    public UserAdminResponse createUser(String email, String password) {
+        String normalizedEmail = email.trim().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("Email already in use: " + normalizedEmail);
+        }
+        User user = User.builder()
+                .email(normalizedEmail)
+                .password(passwordEncoder.encode(password))
+                .roles(Set.of(UserRoles.ROLE_GUEST.toString()))
+                .emailVerified(true)
+                .build();
+        User saved = userRepository.save(user);
+        log.info("Admin created user {}", normalizedEmail);
+        return UserAdminResponse.from(saved);
     }
 }

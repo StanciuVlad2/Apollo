@@ -65,5 +65,5 @@ eureka:
 
 app:
   token:
-    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    secret: ${APP_TOKEN_SECRET:YOUR_JWT_SECRET_KEY_MIN_256_BITS}
     issuer: restaurant-app

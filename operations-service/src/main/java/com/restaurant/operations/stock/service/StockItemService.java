@@ -273,6 +273,19 @@ public class StockItemService {
      * @param amount         quantity to deduct, expressed in {@code recipeUnit}
      * @param recipeUnit     unit used in the recipe (may differ from stock unit)
      */
+    public boolean hasSufficientStock(String ingredientName, double amount, String recipeUnit) {
+        return stockItemRepository.findByNameIgnoreCase(ingredientName)
+                .map(item -> {
+                    try {
+                        double converted = convertUnits(amount, recipeUnit, item.getUnit());
+                        return item.getQuantity() >= converted;
+                    } catch (IllegalArgumentException e) {
+                        return false;
+                    }
+                })
+                .orElse(false);
+    }
+
     public void deduct(String ingredientName, double amount, String recipeUnit) {
         StockItem item = stockItemRepository.findByNameIgnoreCase(ingredientName)
                 .orElseThrow(() -> new NoSuchElementException(

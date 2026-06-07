@@ -16,8 +16,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USER:odin.dining@gmail.com}
-    password: ${MAIL_PASS:uvza whcd cayb hmdn}
+    username: ${MAIL_USER:YOUR_GMAIL_ADDRESS}
+    password: ${MAIL_PASS:YOUR_GMAIL_APP_PASSWORD}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -30,6 +30,6 @@ eureka:
 
 app:
   email:
-    from: ${MAIL_USER:odin.dining@gmail.com}
+    from: ${MAIL_USER:YOUR_GMAIL_ADDRESS}
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}

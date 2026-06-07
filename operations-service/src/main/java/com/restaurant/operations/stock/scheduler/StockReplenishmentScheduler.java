@@ -31,7 +31,7 @@ public class StockReplenishmentScheduler {
      * Auto-replenish low-stock items.
      * Cron: 0 0 1 * * * → Every day at 01:00 AM
      */
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 1 * * *")
     public void replenishLowStockItems() {
         log.info("Starting scheduled stock replenishment task...");
 

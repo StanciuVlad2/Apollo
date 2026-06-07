@@ -12,8 +12,11 @@ import com.restaurant.reservations.repository.RestaurantTableRepository;
 import com.restaurant.shared.security.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -95,7 +98,13 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.CONFIRMED);
         reservation.setNotes(request.getNotes());
 
-        Reservation savedReservation = reservationRepository.save(reservation);
+        Reservation savedReservation;
+        try {
+            savedReservation = reservationRepository.save(reservation);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Table is already reserved for this time slot");
+        }
 
         if (savedReservation.getCustomerEmail() != null) {
             reservationEventProducer.publish(new ReservationEvent(
@@ -117,7 +126,7 @@ public class ReservationService {
         List<RestaurantTable> allTables;
 
         if (partySize != null) {
-            allTables = tableRepository.findAllByCapacityAndIsActiveTrue(partySize);
+            allTables = tableRepository.findAllByCapacityGreaterThanEqualAndIsActiveTrue(partySize);
         } else {
             allTables = tableRepository.findAllByIsActiveTrue();
         }
@@ -197,7 +206,7 @@ public class ReservationService {
             .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
 
         // Check if user owns the reservation or is manager/admin
-        if (reservation.getUserId() != null && !reservation.getUserId().equals(currentUserId) && !isManager) {
+        if (!isManager && (reservation.getUserId() == null || !reservation.getUserId().equals(currentUserId))) {
             throw new IllegalArgumentException("Not authorized to cancel this reservation");
         }
 

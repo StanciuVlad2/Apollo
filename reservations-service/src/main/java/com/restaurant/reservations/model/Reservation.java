@@ -7,7 +7,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "reservations")
+@Table(name = "reservations", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"table_id", "reservation_date", "start_time"},
+            name = "uk_reservation_table_date_slot")
+})
 public class Reservation {
 
     @Id

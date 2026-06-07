@@ -1,5 +1,6 @@
 package com.restaurant.auth.controller;
 
+import com.restaurant.auth.dto.AdminCreateUserRequest;
 import com.restaurant.auth.dto.UpdateUserRolesRequest;
 import com.restaurant.auth.dto.UserAdminResponse;
 import com.restaurant.auth.service.UserManagementService;
@@ -8,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +25,18 @@ import java.security.Principal;
 public class UserManagementController {
 
     private final UserManagementService userManagementService;
+
+    /**
+     * POST /api/admin/users
+     * Creates a verified user account (admin-only).
+     */
+    @PostMapping
+    public ResponseEntity<UserAdminResponse> createUser(
+            @Valid @RequestBody AdminCreateUserRequest request
+    ) {
+        UserAdminResponse created = userManagementService.createUser(request.email(), request.password());
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
 
     /**
      * GET /api/admin/users?page=0&size=20&search=john&role=ROLE_GUEST

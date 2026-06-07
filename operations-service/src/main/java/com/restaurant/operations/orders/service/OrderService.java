@@ -38,18 +38,21 @@ public class OrderService {
     private final StockItemService stockItemService;
     private final OrderEventProducer orderEventProducer;
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getAll() {
         return orderRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getByUserId(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getByStatus(String status) {
         OrderStatus orderStatus = parseStatus(status);
         return orderRepository.findByStatus(orderStatus).stream()
@@ -57,6 +60,7 @@ public class OrderService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse getById(Long id) {
         return orderRepository.findById(id)
                 .map(this::toResponse)
@@ -144,6 +148,7 @@ public class OrderService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public ReservationBillResponse getReservationBill(Long reservationId) {
         List<Order> orders = orderRepository.findByReservationId(reservationId);
         List<OrderResponse> orderResponses = orders.stream().map(this::toResponse).toList();
@@ -169,6 +174,7 @@ public class OrderService {
         return new ReservationBillResponse(reservationId, orderResponses, List.copyOf(aggregated.values()), grandTotal);
     }
 
+    @Transactional(readOnly = true)
     public OrderReportData generateReport(LocalDate from, LocalDate to) {
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.plusDays(1).atStartOfDay();
@@ -181,7 +187,7 @@ public class OrderService {
                 .flatMap(o -> o.getItems().stream())
                 .mapToDouble(i -> i.getUnitPrice() * i.getQuantity())
                 .sum();
-        double avg = orders.isEmpty() ? 0.0 : Math.round((totalRevenue / orders.size()) * 100.0) / 100.0;
+        double avg = completed == 0 ? 0.0 : Math.round((totalRevenue / completed) * 100.0) / 100.0;
 
         Map<String, long[]> itemMap = new LinkedHashMap<>();
         Map<String, double[]> itemRevMap = new LinkedHashMap<>();
@@ -210,6 +216,25 @@ public class OrderService {
      * the required ingredient quantities from stock.
      */
     private void deductStock(Order order) {
+        // Preflight: verify all ingredients have sufficient stock before any deduction
+        for (OrderItem orderItem : order.getItems()) {
+            MenuItem menuItem;
+            try {
+                menuItem = menuItemService.getRawById(orderItem.getMenuItemId());
+            } catch (NoSuchElementException e) {
+                continue; // missing menu item — skip silently
+            }
+            for (RecipeIngredient ingredient : menuItem.getRecipe()) {
+                double totalNeeded = ingredient.getQuantity() * orderItem.getQuantity();
+                if (!stockItemService.hasSufficientStock(
+                        ingredient.getIngredientName(), totalNeeded, ingredient.getUnit())) {
+                    throw new IllegalStateException(
+                            "Insufficient stock for ingredient: " + ingredient.getIngredientName());
+                }
+            }
+        }
+
+        // All checks passed — execute deductions
         for (OrderItem orderItem : order.getItems()) {
             MenuItem menuItem;
             try {
@@ -218,7 +243,6 @@ public class OrderService {
                 log.warn("Menu item {} not found in ES – skipping stock deduction", orderItem.getMenuItemId());
                 continue;
             }
-
             for (RecipeIngredient ingredient : menuItem.getRecipe()) {
                 double totalNeeded = ingredient.getQuantity() * orderItem.getQuantity();
                 try {

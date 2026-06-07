@@ -8,16 +8,22 @@ import com.restaurant.feedback.model.Feedback;
 import com.restaurant.feedback.repository.CompletableOrderRepository;
 import com.restaurant.feedback.repository.FeedbackRepository;
 import com.restaurant.shared.security.UserHolder;
+import com.restaurant.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class FeedbackService {
+
+    private static final Set<String> STAFF_ROLES =
+            Set.of("ROLE_WAITER", "ROLE_CHEF", "ROLE_MANAGER", "ROLE_ADMIN");
 
     private final FeedbackRepository feedbackRepository;
     private final CompletableOrderRepository completableOrderRepository;
@@ -47,18 +53,30 @@ public class FeedbackService {
     }
 
     public FeedbackResponse getByOrderId(Long orderId) {
-        return feedbackRepository.findByOrderId(orderId)
-                .map(this::toResponse)
+        Feedback feedback = feedbackRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NoSuchElementException("No feedback for order " + orderId));
+        UserPrincipal current = UserHolder.getCurrentUser();
+        if (!isStaff(current) && !current.userId().equals(feedback.getUserId())) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return toResponse(feedback);
     }
 
     public boolean existsByOrderId(Long orderId) {
-        return feedbackRepository.existsByOrderId(orderId);
+        UserPrincipal current = UserHolder.getCurrentUser();
+        if (isStaff(current)) {
+            return feedbackRepository.existsByOrderId(orderId);
+        }
+        return feedbackRepository.existsByOrderIdAndUserId(orderId, current.userId());
     }
 
     public List<FeedbackResponse> getAll() {
         return feedbackRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::toResponse).toList();
+    }
+
+    private boolean isStaff(UserPrincipal user) {
+        return user.roles().stream().anyMatch(STAFF_ROLES::contains);
     }
 
     private FeedbackResponse toResponse(Feedback f) {

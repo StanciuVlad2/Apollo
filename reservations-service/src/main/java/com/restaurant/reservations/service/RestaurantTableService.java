@@ -1,11 +1,15 @@
 package com.restaurant.reservations.service;
 
 import com.restaurant.reservations.dto.*;
+import com.restaurant.reservations.enums.ReservationStatus;
 import com.restaurant.reservations.model.RestaurantTable;
+import com.restaurant.reservations.repository.ReservationRepository;
 import com.restaurant.reservations.repository.RestaurantTableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +19,9 @@ public class RestaurantTableService {
 
     @Autowired
     private RestaurantTableRepository tableRepository;
+
+    @Autowired
+    private ReservationRepository reservationRepository;
 
     @Transactional
     public TableResponse createTable(CreateTableRequest request) {
@@ -74,6 +81,13 @@ public class RestaurantTableService {
     public void deleteTable(Long id) {
         if (!tableRepository.existsById(id)) {
             throw new IllegalArgumentException("Table not found: " + id);
+        }
+        boolean hasActiveReservations = reservationRepository.findAll().stream()
+                .anyMatch(r -> r.getTable().getId().equals(id)
+                        && r.getStatus() == ReservationStatus.CONFIRMED);
+        if (hasActiveReservations) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot delete table with active reservations");
         }
         tableRepository.deleteById(id);
     }

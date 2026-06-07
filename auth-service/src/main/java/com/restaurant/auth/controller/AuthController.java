@@ -60,13 +60,9 @@ public class AuthController {
                 .email(email)
                 .password(encoder.encode(req.password()))
                 .roles(Set.of(UserRoles.ROLE_GUEST.toString()))
-                .emailVerified(req.skipEmailVerification())
+                .emailVerified(false)
                 .build();
         users.save(u);
-
-        if (req.skipEmailVerification()) {
-            return ResponseEntity.ok().body("User created successfully.");
-        }
 
         // Generate verification token
         String token = UUID.randomUUID().toString();

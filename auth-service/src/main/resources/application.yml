@@ -19,8 +19,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USER:odin.dining@gmail.com}
-    password: ${MAIL_PASS:uvza whcd cayb hmdn}
+    username: ${MAIL_USER:YOUR_GMAIL_ADDRESS}
+    password: ${MAIL_PASS:YOUR_GMAIL_APP_PASSWORD}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -33,10 +33,10 @@ eureka:
 
 app:
   token:
-    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    secret: ${APP_TOKEN_SECRET:YOUR_JWT_SECRET_KEY_MIN_256_BITS}
     issuer: restaurant-app
     ttl-minutes: 30
   email:
-    from: ${MAIL_USER:odin.dining@gmail.com}
+    from: ${MAIL_USER:YOUR_GMAIL_ADDRESS}
     verification:
       url: ${FRONTEND_URL:http://localhost:5173}/verify-email

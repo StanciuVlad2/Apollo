@@ -1,5 +1,11 @@
 name: odin-restaurant-microservices
 
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16
@@ -61,6 +67,7 @@ services:
       - "8761:8761"
     networks:
       - apollo-network
+    logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8761/actuator/health || exit 1"]
       interval: 10s
@@ -85,6 +92,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   operations-service:
     build: operations-service/
@@ -107,6 +115,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   reservations-service:
     build: reservations-service/
@@ -129,6 +138,7 @@ services:
         condition: service_started
     networks:
       - apollo-network
+    logging: *default-logging
 
   feedback-service:
     build: feedback-service/
@@ -148,6 +158,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   cocktails-service:
     build: cocktails-service/
@@ -167,6 +178,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   reports-service:
     build: reports-service/
@@ -180,6 +192,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   settings-service:
     build: settings-service/
@@ -198,6 +211,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   vouchers-service:
     build: vouchers-service/
@@ -219,6 +233,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   notifications-service:
     build: notifications-service/
@@ -237,6 +252,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
   api-gateway:
     build: api-gateway/
@@ -250,6 +266,7 @@ services:
         condition: service_healthy
     networks:
       - apollo-network
+    logging: *default-logging
 
 volumes:
   postgres_data:

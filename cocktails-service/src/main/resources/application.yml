@@ -24,9 +24,9 @@ eureka:
 
 app:
   token:
-    secret: ${APP_TOKEN_SECRET:MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
+    secret: ${APP_TOKEN_SECRET:YOUR_JWT_SECRET_KEY_MIN_256_BITS}
     issuer: restaurant-app
     ttl-minutes: 30
   gemini:
-    api-key: ${GEMINI_API_KEY:AIzaSyCd8y-pA503Jz6qJOMu2p-hcG5gcjMb_ms}
+    api-key: ${GEMINI_API_KEY:YOUR_GEMINI_API_KEY}
     model: gemini-2.5-flash

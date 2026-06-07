@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -39,10 +41,18 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getByUserId(userId));
     }
 
+    private static final Set<String> STAFF_ROLES =
+            Set.of("ROLE_WAITER", "ROLE_CHEF", "ROLE_MANAGER", "ROLE_ADMIN");
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.getById(id));
+        OrderResponse order = orderService.getById(id);
+        boolean isStaff = UserHolder.getCurrentUser().roles().stream().anyMatch(STAFF_ROLES::contains);
+        if (!isStaff && !Objects.equals(order.userId(), UserHolder.getCurrentUser().userId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(order);
     }
 
     @PostMapping

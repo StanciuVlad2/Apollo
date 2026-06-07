@@ -1,9 +1,13 @@
 package com.restaurant.reservations.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CreateTableRequest {
     private Integer tableNumber;
     private Integer capacity;
+    @JsonProperty("xPosition")
     private Double xPosition;
+    @JsonProperty("yPosition")
     private Double yPosition;
     private Double width;
     private Double height;

@@ -19,7 +19,6 @@ public class SecurityConfig extends BaseSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         super.configure(http);
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/cocktails/generate").permitAll()
                 .anyRequest().authenticated()
         );
         return http.build();

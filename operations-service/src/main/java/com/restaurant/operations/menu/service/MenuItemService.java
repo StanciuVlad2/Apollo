@@ -126,7 +126,26 @@ public class MenuItemService {
                 .build();
     }
 
+    public List<MenuItemResponse> getAllFull() {
+        return StreamSupport.stream(menuItemRepository.findAll().spliterator(), false)
+                .map(this::toFullResponse)
+                .toList();
+    }
+
     private MenuItemResponse toResponse(MenuItem item) {
+        return new MenuItemResponse(
+                item.getId(),
+                item.getName(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getCategory(),
+                item.getAvailable(),
+                item.getImageUrl(),
+                List.of()
+        );
+    }
+
+    private MenuItemResponse toFullResponse(MenuItem item) {
         return new MenuItemResponse(
                 item.getId(),
                 item.getName(),

@@ -53,6 +53,13 @@ public class MenuItemController {
         return ResponseEntity.ok(menuItemService.getAll());
     }
 
+    /** Staff endpoint – returns all menu items with recipe details (MANAGER/CHEF/ADMIN). */
+    @GetMapping("/staff")
+    @PreAuthorize("hasAnyRole('MANAGER','CHEF','ADMIN')")
+    public ResponseEntity<List<MenuItemResponse>> getAllFull() {
+        return ResponseEntity.ok(menuItemService.getAllFull());
+    }
+
     /** Public endpoint – single item. */
     @GetMapping("/{id}")
     public ResponseEntity<MenuItemResponse> getById(@PathVariable String id) {

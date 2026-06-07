@@ -1,7 +1,6 @@
 package com.restaurant.reports.engine;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.restaurant.reports.dto.Preset;
 import com.restaurant.reports.dto.ReportDefinition;
@@ -20,8 +19,8 @@ class ReportEngineTest {
 
     @BeforeEach
     void setUp() {
-        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory()).registerModule(new JavaTimeModule());
-        engine = new ReportEngine(yamlMapper);
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        engine = new ReportEngine(mapper);
     }
 
     @Test
