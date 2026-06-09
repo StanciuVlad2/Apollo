@@ -216,30 +216,38 @@ public class OrderService {
      * the required ingredient quantities from stock.
      */
     private void deductStock(Order order) {
-        // Preflight: verify all ingredients have sufficient stock before any deduction
+        // Step 1: fetch menu items once and aggregate cumulative requirements per ingredient
+        // key = ingredientName (lower) + "|" + unit; value = [totalAmount]
+        Map<String, double[]> cumulative = new LinkedHashMap<>();
+        Map<String, MenuItem> menuItemCache = new LinkedHashMap<>();
+
         for (OrderItem orderItem : order.getItems()) {
             MenuItem menuItem;
             try {
                 menuItem = menuItemService.getRawById(orderItem.getMenuItemId());
             } catch (NoSuchElementException e) {
-                continue; // missing menu item — skip silently
+                continue;
             }
+            menuItemCache.put(orderItem.getMenuItemId(), menuItem);
             for (RecipeIngredient ingredient : menuItem.getRecipe()) {
                 double totalNeeded = ingredient.getQuantity() * orderItem.getQuantity();
-                if (!stockItemService.hasSufficientStock(
-                        ingredient.getIngredientName(), totalNeeded, ingredient.getUnit())) {
-                    throw new IllegalStateException(
-                            "Insufficient stock for ingredient: " + ingredient.getIngredientName());
-                }
+                String key = ingredient.getIngredientName().toLowerCase() + "|" + ingredient.getUnit();
+                cumulative.computeIfAbsent(key, k -> new double[]{0})[0] += totalNeeded;
             }
         }
 
-        // All checks passed — execute deductions
+        // Step 2: preflight against cumulative totals — catches shared-ingredient edge case
+        for (Map.Entry<String, double[]> entry : cumulative.entrySet()) {
+            String[] parts = entry.getKey().split("\\|", 2);
+            if (!stockItemService.hasSufficientStock(parts[0], entry.getValue()[0], parts[1])) {
+                throw new IllegalStateException("Insufficient stock for ingredient: " + parts[0]);
+            }
+        }
+
+        // Step 3: execute deductions
         for (OrderItem orderItem : order.getItems()) {
-            MenuItem menuItem;
-            try {
-                menuItem = menuItemService.getRawById(orderItem.getMenuItemId());
-            } catch (NoSuchElementException e) {
+            MenuItem menuItem = menuItemCache.get(orderItem.getMenuItemId());
+            if (menuItem == null) {
                 log.warn("Menu item {} not found in ES – skipping stock deduction", orderItem.getMenuItemId());
                 continue;
             }

@@ -40,6 +40,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         @Param("startTime") LocalTime startTime
     );
 
+    boolean existsByTableId(Long tableId);
+
+    boolean existsByTableIdAndStatus(Long tableId, ReservationStatus status);
+
     List<Reservation> findAllByUserId(Long userId);
 
     List<Reservation> findByReservationDateBetween(LocalDate from, LocalDate to);

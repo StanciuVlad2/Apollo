@@ -5,14 +5,32 @@ SERVICES=(auth-service operations-service reservations-service feedback-service 
 NO_BOOTJAR=(eureka-server)
 
 usage() {
-  echo "Usage: $0 [all | <service-name> | clean]"
+  echo "Usage: $0 [all | <service-name> | clean] [--demo]"
   echo "  all              — build and redeploy every service"
   echo "  <service-name>   — build and redeploy one service"
   echo "  clean            — remove images and build cache for THIS project"
+  echo "  --demo           — activate Spring 'demo' profile on auth-service (seeds test users)"
   echo ""
   echo "Services: ${SERVICES[*]}"
   exit 1
 }
+
+# Parsare flag --demo (poate apărea oriunde în argumente)
+DEMO=false
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" == "--demo" ]]; then
+    DEMO=true
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+
+if [[ "$DEMO" == true ]]; then
+  export SPRING_PROFILES_ACTIVE=demo
+  echo "⚠  Demo mode: auth-service va seeda userii de test la startup"
+fi
 
 # Funcție pentru curățenie chirurgicală (fără să strici alte proiecte de muncă)
 cleanup_project() {
@@ -61,7 +79,7 @@ build_and_deploy() {
   echo "✓ $svc deployed"
 }
 
-[[ $# -lt 1 ]] && usage
+[[ ${#ARGS[@]} -lt 1 ]] && usage
 
 TARGET=$1
 

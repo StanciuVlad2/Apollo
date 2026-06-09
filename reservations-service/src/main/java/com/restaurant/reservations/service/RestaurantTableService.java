@@ -79,15 +79,17 @@ public class RestaurantTableService {
 
     @Transactional
     public void deleteTable(Long id) {
-        if (!tableRepository.existsById(id)) {
-            throw new IllegalArgumentException("Table not found: " + id);
-        }
-        boolean hasActiveReservations = reservationRepository.findAll().stream()
-                .anyMatch(r -> r.getTable().getId().equals(id)
-                        && r.getStatus() == ReservationStatus.CONFIRMED);
-        if (hasActiveReservations) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Table not found: " + id));
+        if (reservationRepository.existsByTableIdAndStatus(id, ReservationStatus.CONFIRMED)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Cannot delete table with active reservations");
+        }
+        if (reservationRepository.existsByTableId(id)) {
+            // Historical reservations (cancelled/completed) hold a FK reference — deactivate instead
+            table.setIsActive(false);
+            tableRepository.save(table);
+            return;
         }
         tableRepository.deleteById(id);
     }

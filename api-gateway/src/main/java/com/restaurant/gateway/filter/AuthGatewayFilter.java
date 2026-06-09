@@ -25,10 +25,11 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
     private final String issuer;
 
     private static final List<String> PUBLIC_POST = List.of(
-            "/api/auth/login", "/api/auth/register", "/api/cocktails/generate"
+            "/api/auth/login", "/api/auth/register", "/api/reservations"
     );
     private static final List<String> PUBLIC_GET_PREFIXES = List.of(
-            "/api/auth/verify-email", "/api/menu-items", "/api/tables", "/api/settings", "/api/stock/events"
+            "/api/auth/verify-email", "/api/menu-items", "/api/tables", "/api/settings",
+            "/api/stock/events", "/api/reservations/availability"
     );
 
     public AuthGatewayFilter(

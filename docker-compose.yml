@@ -85,6 +85,7 @@ services:
       - APP_TOKEN_SECRET=${APP_TOKEN_SECRET:-MySuperSecretJWTKeyThatIsAtLeast256BitsLong!!}
       - MAIL_USER=${MAIL_USER:-odin.dining@gmail.com}
       - MAIL_PASS=${MAIL_PASS:-uvza whcd cayb hmdn}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-}
     depends_on:
       postgres:
         condition: service_healthy

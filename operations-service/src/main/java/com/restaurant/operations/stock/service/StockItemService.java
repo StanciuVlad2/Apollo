@@ -291,7 +291,11 @@ public class StockItemService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "Stock item not found for ingredient: " + ingredientName));
         double converted = convertUnits(amount, recipeUnit, item.getUnit());
-        item.setQuantity(Math.round((item.getQuantity() - converted) * 100.0) / 100.0);
+        double newQty = Math.round((item.getQuantity() - converted) * 100.0) / 100.0;
+        if (newQty < 0) {
+            throw new IllegalStateException("Insufficient stock for: " + ingredientName);
+        }
+        item.setQuantity(newQty);
         stockItemRepository.save(item);
     }
 
